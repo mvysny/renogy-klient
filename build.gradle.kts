@@ -25,6 +25,7 @@ java {
 dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+    implementation("com.fazecast:jSerialComm:2.9.3")
 
     // logging
     implementation("org.slf4j:slf4j-simple:2.0.6")
