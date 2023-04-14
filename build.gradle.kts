@@ -23,13 +23,15 @@ java {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.mvysny.vokorm:vok-orm:2.0")
-    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.1")
+
+    // logging
     implementation("org.slf4j:slf4j-simple:2.0.6")
 
-    // database drivers
+    // PostgreSQL support
     implementation("org.postgresql:postgresql:42.5.1")
+    implementation("com.github.mvysny.vokorm:vok-orm:2.0")
+    implementation("com.zaxxer:HikariCP:5.0.1")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
@@ -46,4 +48,3 @@ tasks.withType<Test> {
 application {
     mainClass.set("MainKt")
 }
-
