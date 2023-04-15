@@ -9,4 +9,11 @@ class RenogyClientTest : DynaTest({
             dummyRenogyData.toJson(false)
         }
     }
+
+    test("ControllerFaults") {
+        expect(setOf()) { ControllerFaults.fromModbus(0.toUInt()) }
+        expect(setOf(ControllerFaults.PhotovoltaicInputSideShortCircuit, ControllerFaults.BatteryOverDischarge)) {
+            ControllerFaults.fromModbus(0x01010000.toUInt())
+        }
+    }
 })
