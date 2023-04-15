@@ -6,9 +6,14 @@ import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.sql.Connection
+import java.sql.Driver
+import java.sql.DriverManager
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlin.time.Duration.Companion.days
 
 /**
  * Logs [RenogyData] somewhere.
@@ -177,4 +182,105 @@ class StdoutCSVDataLogger(val utc: Boolean) : DataLogger {
     }
 
     override fun close() {}
+}
+
+/**
+ * Logs data into PostgreSQL via the `psql` command-line client.
+ * @param url the connection URL, e.g. `postgresql://user:pass@localhost:5432/postgres`
+ */
+class PostgresDataLogger(val url: String) : DataLogger {
+    private lateinit var conn: Connection
+
+    private fun sql(sql: String) {
+        log.debug("Running: $sql")
+        conn.createStatement().use {
+            it.executeUpdate(sql)
+        }
+    }
+
+    override fun init() {
+        conn = DriverManager.getConnection(url)
+        log.debug("Logging into $url")
+        sql("CREATE TABLE IF NOT EXISTS log (" +
+                "DateTime bigint primary key not null," +
+                "BatterySOC smallint not null," +
+                "BatteryVoltage real not null," +
+                "ChargingCurrentToBattery real not null," +
+                "BatteryTemp smallint not null," +
+                "ControllerTemp smallint not null," +
+                "SolarPanelVoltage real not null," +
+                "SolarPanelCurrent real not null," +
+                "SolarPanelPower smallint not null," +
+                "Daily_BatteryMinVoltage real not null," +
+                "Daily_BatteryMaxVoltage real not null," +
+                "Daily_MaxChargingCurrent real not null," +
+                "Daily_MaxChargingPower smallint not null," +
+                "Daily_ChargingAmpHours smallint not null," +
+                "Daily_PowerGeneration smallint not null," +
+                "Stats_DaysUp int not null," +
+                "Stats_BatteryOverDischargeCount smallint not null," +
+                "Stats_BatteryFullChargeCount smallint not null," +
+                "Stats_TotalChargingBatteryAH int not null," +
+                "Stats_CumulativePowerGenerationWH int not null," +
+                "ChargingState smallint," +
+                "Faults text)")
+    }
+
+    override fun append(data: RenogyData) {
+        val cols = mutableListOf<String>()
+        val values = mutableListOf<String>()
+
+        fun add(col: String, value: Any?) {
+            if (value != null) {
+                cols.add(col)
+                values.add(
+                    when (value) {
+                        is Number, is UShort, is UInt, is UByte -> value.toString()
+                        else -> "'$value'"
+                    }
+                )
+            }
+        }
+
+        add("DateTime", Instant.now().epochSecond)
+        add("BatterySOC", data.powerStatus.batterySOC)
+        add("BatteryVoltage", data.powerStatus.batteryVoltage)
+        add("ChargingCurrentToBattery", data.powerStatus.chargingCurrentToBattery)
+        add("BatteryTemp", data.powerStatus.batteryTemp)
+        add("ControllerTemp", data.powerStatus.controllerTemp)
+        add("SolarPanelVoltage", data.powerStatus.solarPanelVoltage)
+        add("SolarPanelCurrent", data.powerStatus.solarPanelCurrent)
+        add("SolarPanelPower", data.powerStatus.solarPanelPower)
+        add("Daily_BatteryMinVoltage", data.dailyStats.batteryMinVoltage)
+        add("Daily_BatteryMaxVoltage", data.dailyStats.batteryMaxVoltage)
+        add("Daily_MaxChargingCurrent", data.dailyStats.maxChargingCurrent)
+        add("Daily_MaxChargingPower", data.dailyStats.maxChargingPower)
+        add("Daily_ChargingAmpHours", data.dailyStats.chargingAh)
+        add("Daily_PowerGeneration", data.dailyStats.powerGenerationWh)
+        add("Stats_DaysUp", data.historicalData.daysUp)
+        add("Stats_BatteryOverDischargeCount", data.historicalData.batteryOverDischargeCount)
+        add("Stats_BatteryFullChargeCount", data.historicalData.batteryFullChargeCount)
+        add("Stats_TotalChargingBatteryAH", data.historicalData.totalChargingBatteryAH)
+        add("Stats_CumulativePowerGenerationWH", data.historicalData.cumulativePowerGenerationWH)
+        add("ChargingState", data.status.chargingState?.value)
+        add("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
+
+        sql("insert into log (${cols.joinToString(",")}) values (${values.joinToString(",")})")
+    }
+
+    override fun deleteRecordsOlderThan(days: Int) {
+        log.info("Deleting old records")
+        val deleteOlderThan = Instant.now().epochSecond - days.days.inWholeSeconds
+        sql("delete from log where DateTime <= $deleteOlderThan")
+        log.info("Successfully deleted old records")
+    }
+
+    override fun close() {}
+
+    override fun toString(): String =
+        "PostgresDataLogger($url)"
+
+    companion object {
+        private val log = LoggerFactory.getLogger(PostgresDataLogger::class.java)
+    }
 }

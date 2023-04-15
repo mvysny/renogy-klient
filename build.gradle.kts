@@ -34,8 +34,6 @@ dependencies {
 
     // PostgreSQL support
     implementation("org.postgresql:postgresql:42.5.1")
-    implementation("com.github.mvysny.vokorm:vok-orm:2.0")
-    implementation("com.zaxxer:HikariCP:5.0.1")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
