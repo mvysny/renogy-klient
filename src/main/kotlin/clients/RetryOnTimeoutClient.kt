@@ -13,6 +13,7 @@ import kotlin.time.Duration
  * The client will then re-throw the exception and will not reattempt to re-read new data. The reason is
  * that the main loop will call us again anyways.
  * @property file The serial device name, e.g. `/dev/ttyUSB0`. [SerialPortIO] is constructed out of it.
+ * @property timeout the read+write timeout.
  */
 class RetryOnTimeoutClient(val file: File, val timeout: Duration) : RenogyClient {
     /**

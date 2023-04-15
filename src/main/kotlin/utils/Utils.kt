@@ -2,9 +2,15 @@ package utils
 
 import java.io.PrintStream
 import java.time.Instant
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlin.random.nextUInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 fun Random.nextFloat(from: Float, to: Float): Float =
@@ -45,3 +51,14 @@ class CSVWriter(private val out: PrintStream) {
         out.println(row)
     }
 }
+
+fun ScheduledExecutorService.scheduleAtTimeOfDay(timeOfDay: LocalTime, command: () -> Unit): ScheduledFuture<*> {
+    var millisToNextExecution = ChronoUnit.MILLIS.between(LocalTime.now(), timeOfDay)
+    if (millisToNextExecution < 0) {
+        millisToNextExecution += 1.days.inWholeMilliseconds
+    }
+    return scheduleAtFixedRate(command, millisToNextExecution, 1.days.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+}
+
+fun ScheduledExecutorService.scheduleAtFixedRate(rate: Duration, command: () -> Unit): ScheduledFuture<*> =
+    scheduleAtFixedRate(command, 0L, rate.inWholeMilliseconds, TimeUnit.MILLISECONDS)
