@@ -33,7 +33,7 @@ interface DataLogger : Closeable {
 private class CSVRenogyWriter(stream: PrintStream) {
     private val csv = CSVWriter(stream)
     fun writeHeader() {
-        csv.writeHeader(
+        csv.writeLine(
             "DateTime",
             "BatterySOC",
             "BatteryVoltage",
