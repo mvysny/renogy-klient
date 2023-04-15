@@ -10,7 +10,9 @@ import java.io.File
  * @property printStatusOnly if true, print the Renogy Rover status as JSON to stdout and quit.
  * @property utc CSV: dump date in UTC instead of local, handy for Grafana.
  * @property csv if not null, appends status to this CSV file. Disables stdout status logging.
- * @property postgres if not null, appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. `postgresql://user:pass@localhost:5432/postgres`
+ * @property postgres if not null, appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. `jdbc:postgresql://localhost:5432/postgres`
+ * @property postgresUsername PostgreSQL username
+ * @property postgresPassword PostgreSQL password
  * @property stateFile overwrites status to file other than the default 'status.json'
  * @property pollInterval in seconds: how frequently to poll the controller for data, defaults to 10
  * @property pruneLog Prunes log entries older than x days, defaults to 365. Applies to databases only; a CSV file is never pruned.
@@ -22,6 +24,8 @@ data class Args(
     val utc: Boolean,
     val csv: File?,
     val postgres: String?,
+    val postgresUsername: String?,
+    val postgresPassword: String?,
     val stateFile: File,
     val pollInterval: Int,
     val pruneLog: Int,
@@ -44,7 +48,7 @@ data class Args(
                 result.dataLoggers.add(CSVDataLogger(csv, utc))
             }
             if (postgres != null) {
-                result.dataLoggers.add(PostgresDataLogger(postgres))
+                result.dataLoggers.add(PostgresDataLogger(postgres, postgresUsername, postgresPassword))
             }
             if (result.dataLoggers.isEmpty()) {
                 result.dataLoggers.add(StdoutCSVDataLogger(utc))
@@ -63,7 +67,9 @@ data class Args(
             val status by parser.option(ArgType.Boolean, fullName = "status", description = "print the Renogy Rover status as JSON to stdout and quit")
             val utc by parser.option(ArgType.Boolean, fullName = "utc", description = "CSV: dump date in UTC instead of local, handy for Grafana")
             val csv by parser.option(ArgType.String, fullName = "csv", description = "appends status to a CSV file, disables stdout status logging")
-            val postgres by parser.option(ArgType.String, fullName = "postgres", description = "appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. postgresql://user:pass@localhost:5432/postgres")
+            val postgres by parser.option(ArgType.String, fullName = "postgres", description = "appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. jdbc:postgresql://localhost:5432/postgres")
+            val postgresUsername by parser.option(ArgType.String, fullName = "pguser", description = "PostgreSQL user name")
+            val postgresPassword by parser.option(ArgType.String, fullName = "pgpass", description = "PostgreSQL password")
             val statefile by parser.option(ArgType.String, fullName = "statefile", description = "overwrites status to file other than the default 'status.json'")
             val pollingInterval by parser.option(ArgType.Int, fullName = "pollinterval", shortName = "i", description = "in seconds: how frequently to poll the controller for data, defaults to 10")
             val pruneLog by parser.option(ArgType.Int, fullName = "prunelog", description = "prunes log entries older than x days, defaults to 365")
@@ -76,6 +82,8 @@ data class Args(
                 utc == true,
                 csv?.toFile(),
                 postgres,
+                postgresUsername,
+                postgresPassword,
                 (statefile ?: "status.json").toFile(),
                 pollingInterval ?: 10,
                 pruneLog ?: 365,

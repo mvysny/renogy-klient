@@ -6,8 +6,8 @@ import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.net.URI
 import java.sql.Connection
-import java.sql.Driver
 import java.sql.DriverManager
 import java.time.Instant
 import java.time.LocalDateTime
@@ -185,12 +185,12 @@ class StdoutCSVDataLogger(val utc: Boolean) : DataLogger {
 }
 
 /**
- * Logs data into PostgreSQL via the `psql` command-line client.
- * @param url the connection URL, e.g. `postgresql://user:pass@localhost:5432/postgres`
- * @param user if not present in [url], pass it here.
- * @param pass if not present in [url], pass it here.
+ * Logs data into PostgreSQL.
+ * @param url the JDBC connection URL, e.g. `jdbc:postgresql://localhost:5432/postgres`
+ * @param username the username
+ * @param password the password
  */
-class PostgresDataLogger(val url: String, val user: String? = null, val pass: String? = null) : DataLogger {
+class PostgresDataLogger(val url: String, val username: String?, val password: String?) : DataLogger {
     private lateinit var conn: Connection
 
     private fun sql(sql: String) {
@@ -201,7 +201,8 @@ class PostgresDataLogger(val url: String, val user: String? = null, val pass: St
     }
 
     override fun init() {
-        conn = DriverManager.getConnection(url, user, pass)
+        conn = DriverManager.getConnection(url, username, password)
+
         log.debug("Logging into $url")
         sql("CREATE TABLE IF NOT EXISTS log (" +
                 "DateTime bigint primary key not null," +
