@@ -6,6 +6,7 @@ import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class IOTimeoutException(msg: String) : IOException(msg)
 
@@ -30,6 +31,29 @@ interface IO : Closeable {
      * @throws IOTimeoutException on timeout
      */
     fun write(bytes: ByteArray, timeout: Duration = Duration.ZERO)
+}
+
+/**
+ * Drains the pipe so that there are no stray bytes left. Blocks up until [timeout].
+ */
+fun IO.drain(timeout: Duration = 1.seconds) {
+    try {
+        while (true) {
+            read(128, timeout)
+        }
+    } catch (e: IOTimeoutException) {
+        // okay
+    }
+}
+
+fun IO.drainQuietly(timeout: Duration = 1.seconds) {
+    val log = LoggerFactory.getLogger(javaClass)
+    log.debug("Draining $this")
+    try {
+        drain(timeout)
+    } catch (e: IOException) {
+        log.warn("Failed to drain $this", e)
+    }
 }
 
 /**
