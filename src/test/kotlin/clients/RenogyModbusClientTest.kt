@@ -6,7 +6,6 @@ import utils.addAll
 import utils.toHex
 import kotlin.test.expect
 import kotlin.test.fail
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class RenogyModbusClientTest : DynaTest({

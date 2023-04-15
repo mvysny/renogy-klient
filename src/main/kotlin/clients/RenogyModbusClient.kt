@@ -88,7 +88,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
         val productType = ProductType.values().firstOrNull { it.modbusValue == productTypeNum }
 
         result = readRegister(0x0C, 16)
-        val productModel = result.toString(Charsets.US_ASCII).trim()
+        val productModel = result.toAsciiString().trim()
 
         // software version/hardware version
         result = readRegister(0x0014, 8)
