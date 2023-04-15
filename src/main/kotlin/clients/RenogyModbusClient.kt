@@ -197,6 +197,6 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
 
     companion object {
         private val COMMAND_READ_REGISTER: Byte = 0x03
-        val log = LoggerFactory.getLogger(RenogyModbusClient::class.java)
+        private val log = LoggerFactory.getLogger(RenogyModbusClient::class.java)
     }
 }
