@@ -37,6 +37,7 @@ dependencies {
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
+    testImplementation("org.testcontainers:postgresql:1.17.6")
 }
 
 tasks.withType<Test> {

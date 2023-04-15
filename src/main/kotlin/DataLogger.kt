@@ -187,8 +187,10 @@ class StdoutCSVDataLogger(val utc: Boolean) : DataLogger {
 /**
  * Logs data into PostgreSQL via the `psql` command-line client.
  * @param url the connection URL, e.g. `postgresql://user:pass@localhost:5432/postgres`
+ * @param user if not present in [url], pass it here.
+ * @param pass if not present in [url], pass it here.
  */
-class PostgresDataLogger(val url: String) : DataLogger {
+class PostgresDataLogger(val url: String, val user: String? = null, val pass: String? = null) : DataLogger {
     private lateinit var conn: Connection
 
     private fun sql(sql: String) {
@@ -199,7 +201,7 @@ class PostgresDataLogger(val url: String) : DataLogger {
     }
 
     override fun init() {
-        conn = DriverManager.getConnection(url)
+        conn = DriverManager.getConnection(url, user, pass)
         log.debug("Logging into $url")
         sql("CREATE TABLE IF NOT EXISTS log (" +
                 "DateTime bigint primary key not null," +
