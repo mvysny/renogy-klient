@@ -35,7 +35,7 @@ data class Args(
     /**
      * If 'true' we'll feed the data from a dummy device. Useful for testing.
      */
-    val isDummy: Boolean get() = device.absolutePath == "dummy"
+    val isDummy: Boolean get() = device.path == "dummy"
 
     fun newDataLogger(): DataLogger {
         val result = CompositeDataLogger()
