@@ -1,7 +1,5 @@
 package utils
 
-import org.slf4j.LoggerFactory
-import java.io.Closeable
 import kotlin.random.Random
 import kotlin.random.nextUInt
 
@@ -12,12 +10,11 @@ fun Random.nextUShort(from: UShort, to: UShort): UShort =
     nextUInt(from.toUInt(), to.toUInt()).toUShort()
 
 /**
- * Closes this closeable. Calls [Closeable.close] but catches any exception and prints it to stderr.
+ * Formats this byte array as a string of hex, e.g. "02ff35"
  */
-fun Closeable.closeQuietly() {
-    try {
-        close()
-    } catch (e: Exception) {
-        LoggerFactory.getLogger(javaClass).warn("Close failed: $e", e)
-    }
-}
+fun ByteArray.toHex(): String = joinToString(separator = "") { it.toHex() }
+
+/**
+ * Formats this byte as a 2-character hex value, e.g. "03" or "fe".
+ */
+fun Byte.toHex(): String = toUByte().toInt().toString(16).padStart(2, '0')
