@@ -23,7 +23,7 @@ class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate
      */
     private var prevPowerGenerationWh: UShort? = null
 
-    private var lastDataSampledAt: LocalDate? = null
+    private var lastDataSampledAt: LocalDate = LocalDate.now()
 
     override fun getAllData(cachedSystemInfo: SystemInfo?): RenogyData {
         val allData: RenogyData = delegate.getAllData(cachedSystemInfo)
