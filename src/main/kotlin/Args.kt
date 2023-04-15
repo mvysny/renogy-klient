@@ -2,6 +2,7 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import org.slf4j.LoggerFactory
 import org.slf4j.simple.SimpleLoggerConfiguration
+import utils.closeQuietly
 import java.io.File
 
 /**
@@ -35,6 +36,25 @@ data class Args(
      * If 'true' we'll feed the data from a dummy device. Useful for testing.
      */
     val isDummy: Boolean get() = device.absolutePath == "dummy"
+
+    fun newDataLogger(): DataLogger {
+        val result = CompositeDataLogger()
+        try {
+            if (csv != null) {
+                result.dataLoggers.add(CSVDataLogger(csv, utc))
+            }
+            if (postgres != null) {
+                result.dataLoggers.add(PostgresDataLogger(postgres))
+            }
+            if (result.dataLoggers.isEmpty()) {
+                result.dataLoggers.add(StdoutCSVDataLogger(utc))
+            }
+        } catch (ex: Exception) {
+            result.closeQuietly()
+            throw ex
+        }
+        return result
+    }
 
     companion object {
         fun parse(args: Array<String>): Args {
