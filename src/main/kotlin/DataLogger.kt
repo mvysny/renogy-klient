@@ -272,10 +272,8 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
-        log.info("Deleting old records")
         val deleteOlderThan = Instant.now().epochSecond - days.days.inWholeSeconds
         sql("delete from log where DateTime <= $deleteOlderThan")
-        log.info("Successfully deleted old records")
     }
 
     override fun close() {}
