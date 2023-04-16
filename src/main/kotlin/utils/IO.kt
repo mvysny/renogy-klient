@@ -101,6 +101,8 @@ class SerialPortIO(val devName: File) : IO {
     override fun close() {
         if (!serialPort.closePort()) throw IOException("Failed to close $devName")
     }
+
+    override fun toString(): String = "SerialPortIO($devName)"
 }
 
 /**
