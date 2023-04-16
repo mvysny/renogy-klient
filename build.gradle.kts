@@ -50,5 +50,5 @@ tasks.withType<Test> {
 
 application {
     mainClass.set("MainKt")
-    applicationDefaultJvmArgs = listOf("-Xmx20m")
+    applicationDefaultJvmArgs = listOf("-Xmx20m", "-Xss200k")
 }
