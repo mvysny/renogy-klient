@@ -6,7 +6,6 @@ import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
-import java.net.URI
 import java.sql.Connection
 import java.sql.DriverManager
 import java.time.Instant
