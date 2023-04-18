@@ -23,7 +23,7 @@ You can use Grafana and the postgresql plugin to read the postgresql log databas
 Run:
 
 ```bash
-$ ./bin/renogy-klient.exe -h
+$ ./bin/renogy-klient -h
 
 Usage: renogy-klient options_list
 Arguments: 
@@ -167,7 +167,7 @@ postgres=# grant all privileges on database mydb to myuser;
 Then:
 
 ```bash
-$ ./renogy-klient.exe --postgres postgresql://localhost:5432/mydb --pguser myuser --pgpass mypass /dev/ttyUSB0
+$ ./renogy-klient --postgres postgresql://localhost:5432/mydb --pguser myuser --pgpass mypass /dev/ttyUSB0
 ```
 
 The following columns are available in the `log` database table:
