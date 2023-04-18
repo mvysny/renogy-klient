@@ -46,7 +46,7 @@ Options:
 
 Read below on how to compile the project from sources.
 
-You'll need to install Java JRE first:
+This program requires Java JRE to run:
 
 ```
 $ sudo apt install openjdk-20-jre-headless
@@ -249,7 +249,7 @@ Table of possible faults:
 You can try to compile the project on your Raspberry PI directly, or you can compile
 the project on your more powerful device, then scp the zip file to RPI.
 
-1. Install Java JDK `sudo apt install openjdk-20-jdk-headless`
+1. Install Java JDK `sudo apt install openjdk-20-jdk-headless`. JRE is enough to run the app, but you need JDK to build it.
 2. `git clone https://github.com/mvysny/renogy-klient/` and `cd renogy-klient`
 3. Build with `./gradlew -x test`
 4. Find the zip file in `build/distributions/renogy-klient.zip`
