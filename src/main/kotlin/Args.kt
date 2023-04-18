@@ -62,7 +62,7 @@ data class Args(
 
     companion object {
         fun parse(args: Array<String>): Args {
-            val parser = ArgParser("solar-controller-client")
+            val parser = ArgParser("renogy-klient")
             val device by parser.argument(ArgType.String, description = "the file name of the serial device to communicate with, e.g. /dev/ttyUSB0 . Pass in `dummy` for a dummy Renogy client")
             val status by parser.option(ArgType.Boolean, fullName = "status", description = "print the Renogy Rover status as JSON to stdout and quit")
             val utc by parser.option(ArgType.Boolean, fullName = "utc", description = "CSV: dump date in UTC instead of local, handy for Grafana")
