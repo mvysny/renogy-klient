@@ -172,7 +172,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
         log.debug("getting status")
         val result = readRegister(0x120, 6)
         val streetLightOn = (result[0].toUByte() and 0x80.toUByte()) != 0.toUByte()
-        val streetLightBrightness = result[0].toUByte() and 0x7F.toUByte()
+        val streetLightBrightness = result[0].toUByte() and 0x7Fu
         val chargingState = ChargingState.fromModbus(result[1].toUByte())
         val faultBits = result.getUInt(2)
         val faults = ControllerFaults.fromModbus(faultBits)

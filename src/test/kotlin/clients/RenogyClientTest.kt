@@ -11,9 +11,9 @@ class RenogyClientTest : DynaTest({
     }
 
     test("ControllerFaults") {
-        expect(setOf()) { ControllerFaults.fromModbus(0.toUInt()) }
+        expect(setOf()) { ControllerFaults.fromModbus(0u) }
         expect(setOf(ControllerFaults.PhotovoltaicInputSideShortCircuit, ControllerFaults.BatteryOverDischarge)) {
-            ControllerFaults.fromModbus(0x01010000.toUInt())
+            ControllerFaults.fromModbus(0x01010000u)
         }
     }
 })

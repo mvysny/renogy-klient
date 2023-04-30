@@ -58,7 +58,7 @@ class RenogyModbusClientTest : DynaTest({
         val dailyStats = client.getDailyStats()
         buffer.expectWrittenBytes("0103010b000ab5f3")
         expect(
-            DailyStats(11.2f, 13.2f, 2.16f, 0f, 10.toUShort(), 0.toUShort(), 1544.toUShort(), 2064.toUShort(), 112.toUShort(), 132.toUShort())
+            DailyStats(11.2f, 13.2f, 2.16f, 0f, 10u, 0u, 1544u, 2064u, 112u, 132u)
         ) { dailyStats }
     }
 })

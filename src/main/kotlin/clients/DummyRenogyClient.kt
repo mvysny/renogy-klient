@@ -44,7 +44,7 @@ class DummyRenogyClient : RenogyClient {
 
     private fun getHistoricalData(): HistoricalData {
         val daysUp = (Instant.now() - poweredOnAt).inWholeDays + 1
-        return HistoricalData(daysUp.toUShort(), 0.toUShort(), 0.toUShort(), totalChargingBatteryAH.toUInt(), 0.toUInt(), cumulativePowerGenerationWH.toUInt(), 0.toUInt())
+        return HistoricalData(daysUp.toUShort(), 0u, 0u, totalChargingBatteryAH.toUInt(), 0u, cumulativePowerGenerationWH.toUInt(), 0u)
     }
 
     override fun getAllData(cachedSystemInfo: SystemInfo?): RenogyData {
@@ -67,14 +67,14 @@ class DummyRenogyClient : RenogyClient {
         val currentToBattery = solarPanelPowerW / batteryVoltage
 
         val dummyPowerStatus = PowerStatus(
-            batterySOC = Random.nextUShort(66.toUShort(), 100.toUShort()),
+            batterySOC = Random.nextUShort(66u, 100u),
             batteryVoltage = batteryVoltage,
             chargingCurrentToBattery = currentToBattery,
             batteryTemp = Random.nextInt(18, 24),
             controllerTemp = Random.nextInt(18, 24),
             loadVoltage = 0f, // ignore the load, pretend there's none
             loadCurrent = 0f,
-            loadPower = 0.toUShort(),
+            loadPower = 0u,
             solarPanelVoltage = solarPanelVoltage,
             solarPanelCurrent = solarPanelCurrent,
             solarPanelPower = solarPanelPowerW.toInt().toUShort())
@@ -83,7 +83,7 @@ class DummyRenogyClient : RenogyClient {
 
         val dummyDailyStats = getDailyStats()
         val dummyHistoricalData = getHistoricalData()
-        val dummyStatus = RenogyStatus(false, 0.toUByte(), ChargingState.MpptChargingMode, setOf())
+        val dummyStatus = RenogyStatus(false, 0u, ChargingState.MpptChargingMode, setOf())
         val dummyRenogyData = RenogyData(
             systemInfo,
             dummyPowerStatus,
@@ -114,8 +114,8 @@ class DummyRenogyClient : RenogyClient {
         if (lastDailyStats == null || today != lastDailyStatsRetrievedAtDay) {
             lastDailyStatsRetrievedAtDay = today
             lastDailyStats = DailyStats(batteryVoltage, batteryVoltage, currentToBattery, 0f,
-                solarPanelPowerW.toUInt().toUShort(), 0.toUShort(), ampHoursToBatterySinceLastMeasurement.toUInt().toUShort(),
-            0.toUShort(), energySinceLastMeasurementWh.toUInt().toUShort(), 0.toUShort())
+                solarPanelPowerW.toUInt().toUShort(), 0u, ampHoursToBatterySinceLastMeasurement.toUInt().toUShort(),
+            0u, energySinceLastMeasurementWh.toUInt().toUShort(), 0u)
             lastDailyStatsChargingAh = ampHoursToBatterySinceLastMeasurement
             lastDailyStatsPowerGenerationWh = energySinceLastMeasurementWh
         } else {
@@ -127,11 +127,11 @@ class DummyRenogyClient : RenogyClient {
                 lastDailyStats!!.maxChargingCurrent.coerceAtLeast(currentToBattery),
                 0f,
                 lastDailyStats!!.maxChargingPower.coerceAtLeast(solarPanelPowerW.toUInt().toUShort()),
-                0.toUShort(),
+                0u,
                 lastDailyStatsChargingAh.toUInt().toUShort(),
-                0.toUShort(),
+                0u,
                 lastDailyStatsPowerGenerationWh.toUInt().toUShort(),
-                0.toUShort()
+                0u
             )
         }
 

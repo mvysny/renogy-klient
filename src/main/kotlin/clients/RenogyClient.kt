@@ -40,8 +40,8 @@ enum class ChargingState(val value: UByte) {
      * This happens when it's night outside, or the solar array is disconnected:
      * either the fuse tripped, or perhaps the cables are broken.
      */
-    ChargingDeactivated(0.toUByte()),
-    ChargingActivated(1.toUByte()),
+    ChargingDeactivated(0u),
+    ChargingActivated(1u),
 
     /**
      * Bulk Charging. This algorithm is used for day to day charging. It uses 100% of available solar
@@ -49,7 +49,7 @@ enum class ChargingState(val value: UByte) {
      * voltage has not yet reached constant voltage (Equalize or Boost), the controller operates in
      * constant current mode, delivering its maximum current to the batteries (MPPT Charging).
      */
-    MpptChargingMode(2.toUByte()),
+    MpptChargingMode(2u),
 
     /**
      * Equalization: Is carried out every 28 days of the month. It is intentional overcharging of
@@ -60,7 +60,7 @@ enum class ChargingState(val value: UByte) {
      *
      * Should not be used for AGM batteries.
      */
-    EqualizingChargingMode(3.toUByte()),
+    EqualizingChargingMode(3u),
 
     /**
      * Constant Charging Mode. When the battery reaches the constant voltage set point, the controller
@@ -72,7 +72,7 @@ enum class ChargingState(val value: UByte) {
      * Boost stage maintains a charge for 2 hours by default. The user
      * can adjust the constant time and preset value of boost per their demand.
      */
-    BoostChargingMode(4.toUByte()),
+    BoostChargingMode(4u),
 
     /**
      * After the constant voltage stage ([BoostChargingMode]/[EqualizingChargingMode]), the controller will reduce the battery voltage
@@ -84,11 +84,11 @@ enum class ChargingState(val value: UByte) {
      * current, the controller will no longer be able to maintain the battery to a Float set point and the
      * controller will end the float charge stage and refer back to bulk charging ([MpptChargingMode]).
      */
-    FloatingChargingMode(5.toUByte()),
+    FloatingChargingMode(5u),
     /**
      * Current limiting (overpower)
      */
-    CurrentLimiting(6.toUByte()),
+    CurrentLimiting(6u),
     ;
     companion object {
         fun fromModbus(value: UByte): ChargingState? =

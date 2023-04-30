@@ -12,7 +12,7 @@ import java.time.LocalDate
  */
 class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate {
 
-    private var dailyStatsCalculator: DailyStatsStrategy = DailyStatsStrategy.RenogyPassThrough(0.toUShort())
+    private var dailyStatsCalculator: DailyStatsStrategy = DailyStatsStrategy.RenogyPassThrough(0u)
     init {
         log.info("Starting with daily stats $dailyStatsCalculator")
     }
@@ -47,17 +47,17 @@ class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate
                     (dailyStatsCalculator as DailyStatsStrategy.DontTrustRenogyPeriod).powerGenerationAtMidnight
                 var powerGenerationDuringDontTrustPeriod =
                     (prevPowerGenerationWh - powerGenerationAtMidnight).toUShort()
-                        .coerceAtLeast(0.toUShort()) // to be extra-sure, probably won't happen ever
+                        .coerceAtLeast(0u) // to be extra-sure, probably won't happen ever
                 if (crossedMidnight) {
                     // it's midnight AND renogy reset its stats => no "Don't Trust Renogy" period => zero
-                    powerGenerationDuringDontTrustPeriod = 0.toUShort()
+                    powerGenerationDuringDontTrustPeriod = 0u
                 }
                 dailyStatsCalculator = DailyStatsStrategy.RenogyPassThrough(powerGenerationDuringDontTrustPeriod)
                 log.info("Renogy performed the daily value reset, ending the 'Don't Trust Renogy' Period (powerGeneration: prev=$prevPowerGenerationWh,now=${currentDailyStatsFromRenogy.powerGenerationWh}); current daily stats=$dailyStatsCalculator")
             } else {
                 // not in "Don't Trust Renogy" period? corner-case - perhaps the client was just launched and hasn't hit midnight yet.
                 log.info("Renogy performed the daily value reset but there was no 'Don't Trust Renogy' Period, passing the daily stats through")
-                dailyStatsCalculator = DailyStatsStrategy.RenogyPassThrough(0.toUShort())
+                dailyStatsCalculator = DailyStatsStrategy.RenogyPassThrough(0u)
             }
         }
         this.prevPowerGenerationWh = currentDailyStatsFromRenogy.powerGenerationWh
@@ -117,7 +117,7 @@ private sealed class DailyStatsStrategy {
                 batteryMaxVoltage = myDailyStats.batteryMaxVoltage,
                 maxChargingCurrent = myDailyStats.maxChargingCurrent,
                 maxChargingPower = myDailyStats.maxChargingPower,
-                chargingAh = 0.toUShort(),
+                chargingAh = 0u,
                 powerGenerationWh = (data.dailyStats.powerGenerationWh - powerGenerationAtMidnight).toUShort()
             )
         }
