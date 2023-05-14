@@ -1,6 +1,7 @@
 # Renogy Client
 
 Java app which communicate with Renogy Rover 40A over a RS232 serial port, using the Rover Modbus protocol.
+Works for all Renogy Rovers, including rebranded ones (e.g. [Biltema MPPT controller](https://www.biltema.fi/autoilu---mp/sahkojarjestelma/aurinkopaneelit/mppt-saadin-20-a-2000045547)).
 
 Licensed under the MIT license.
 
