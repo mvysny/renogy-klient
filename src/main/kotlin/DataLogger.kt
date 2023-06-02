@@ -267,7 +267,7 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
         add("ChargingState", data.status.chargingState?.value)
         add("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
 
-        sql("insert into log (${cols.joinToString(",")}) values (${values.joinToString(",")})")
+        sql("insert into log (${cols.joinToString(",")}) values (${values.joinToString(",")}) ON CONFLICT (DateTime) DO UPDATE SET ${cols.indices.joinToString { "${cols[it]} = ${values[it]}" }}")
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
