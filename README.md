@@ -55,6 +55,9 @@ $ sudo apt install openjdk-20-jre-headless
 
 # Running
 
+Renogy-Klient runs on x86, x86-64, arm32, arm64, risc-v, basically everywhere where Java JRE
+runs. Beware though: Grafana doesn't support RISC-V yet; please see+vote for [Discussion #69332](https://github.com/grafana/grafana/discussions/69332).
+
 Example which will log dummy data periodically into a CSV file:
 
 ```bash
