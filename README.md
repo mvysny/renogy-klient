@@ -250,6 +250,32 @@ Table of possible faults:
 | BatteryOverVoltage | |
 | BatteryOverDischarge | |
 
+## Grafana
+
+Follow the [Install Grafana from APT Repository](https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/#install-from-apt-repository)
+tutorial to install Grafana on your arm32/arm64 machine and have it update automatically. To enable and start after
+the installation, read [Start Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/start-restart-grafana/).
+
+Login to Grafana with `admin`/`admin` and change the password. Then, go to *Home / Connections / Add new connection*
+and add a PostgreSQL datasource, with the following values:
+
+* Name: PostgreSQL
+* Host: localhost:5432
+* Database: mydb
+* User: myuser
+* Pass: mypass
+* TLS/SSL Mode: disable
+
+Edit `/etc/grafana/grafana.ini` and enable
+[anonymous access to Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/grafana/#anonymous-authentication).
+This way, you will not have to enter username/password every time you want to see the dashboard.
+To apply the settings, restart Grafana:
+```bash
+sudo systemctl restart grafana-server
+```
+
+TODO example dashboards
+
 # Compiling From Sources
 
 You can try to compile the project on your Raspberry PI directly, or you can compile
