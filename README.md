@@ -151,6 +151,10 @@ a nice set of charts.
 > Grafana WILL spend lots of CPU to parse the CSV file. Only use CSV for initial testing;
 > don't use for regular use. Use postgresql instead.
 
+The memory usage is not that bad: With 64bit Java, the memory usage starts at 80mb, climbs up to 100mb,
+but goes down to 51mb after a day or so. With 32bit java,
+the numbers are much better: the usage starts at 55mb and goes down to 25mb after a day.
+
 ## PostgreSQL
 
 The CSV file tends to grow quite quickly. If you intend to use this tool with Grafana,
