@@ -153,7 +153,8 @@ a nice set of charts.
 
 The memory usage is not that bad: With 64bit Java, the memory usage starts at 80mb, climbs up to 100mb,
 but goes down to 51mb after a day or so. With 32bit java,
-the numbers are much better: the usage starts at 55mb and goes down to 25mb after a day.
+the numbers are much better: the usage starts at 55mb and goes down to 25mb after a day, and even 10mb after two days (!!).
+Probably part of JVM is swapped out: I've created a 512mb swap on my 32bit Ubuntu on RPI Zero 2W.
 
 ## PostgreSQL
 
