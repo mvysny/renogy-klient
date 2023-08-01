@@ -1,4 +1,6 @@
 import clients.RenogyData
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.slf4j.LoggerFactory
 import utils.CSVWriter
 import utils.closeQuietly
@@ -12,6 +14,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import javax.sql.DataSource
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -190,17 +193,25 @@ class StdoutCSVDataLogger(val utc: Boolean) : DataLogger {
  * @param password the password
  */
 class PostgresDataLogger(val url: String, val username: String?, val password: String?) : DataLogger {
-    private lateinit var conn: Connection
+    private lateinit var ds: HikariDataSource
 
     private fun sql(sql: String) {
         log.debug("Running: $sql")
-        conn.createStatement().use {
-            it.executeUpdate(sql)
+        ds.connection.use { conn ->
+            conn.createStatement().use {
+                it.executeUpdate(sql)
+            }
         }
     }
 
     override fun init() {
-        conn = DriverManager.getConnection(url, username, password)
+        val config = HikariConfig().apply {
+            jdbcUrl = url
+            username = this@PostgresDataLogger.username
+            password = this@PostgresDataLogger.password
+            maximumPoolSize = 1
+        }
+        ds = HikariDataSource(config)
 
         log.debug("Logging into $url")
         sql("CREATE TABLE IF NOT EXISTS log (" +
@@ -275,7 +286,9 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
         sql("delete from log where DateTime <= $deleteOlderThan")
     }
 
-    override fun close() {}
+    override fun close() {
+        ds.close()
+    }
 
     override fun toString(): String =
         "PostgresDataLogger($url)"

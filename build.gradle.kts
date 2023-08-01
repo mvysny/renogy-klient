@@ -34,6 +34,8 @@ dependencies {
 
     // PostgreSQL support
     implementation("org.postgresql:postgresql:42.5.1")
+    // connection pooling & liveness testing
+    implementation("com.zaxxer:HikariCP:5.0.1")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
