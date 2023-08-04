@@ -3,9 +3,11 @@ import com.github.mvysny.dynatest.DynaNodeGroup
 import com.github.mvysny.dynatest.DynaTestDsl
 import com.influxdb.client.InfluxDBClient
 import com.influxdb.client.InfluxDBClientFactory
+import com.influxdb.query.FluxTable
 import org.testcontainers.containers.InfluxDBContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.OffsetDateTime
+import kotlin.test.expect
 
 @DynaTestDsl
 fun DynaNodeGroup.influxDBDataLoggerTests() {
@@ -18,8 +20,12 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
             container.withAdminToken(token)
             container.start()
         }
+        lateinit var fluxQuery: String
         beforeGroup {
             client = InfluxDBClientFactory.create(container.url, token.toCharArray(), container.organization, container.bucket)
+            fluxQuery = ("""from(bucket: "${container.bucket}")
+ |> range(start: -1d, stop: 1d)
+ |> filter(fn: (r) => (r["_measurement"] == "renogy" and r["_field"] == "BatterySOC"))""")
         }
         afterGroup { client.close() }
         afterGroup { container.stop() }
@@ -29,6 +35,9 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
             InfluxDB2Logger(container.url, container.organization, container.bucket, token).use {
                 it.init()
                 it.append(dummyRenogyData)
+                val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
+                expect(1) { result.size }
+                expect(100L) { result[0].records[0].value }
             }
         }
         test("upsert") {
@@ -37,8 +46,10 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
                 it.append(dummyRenogyData)
                 it.append(dummyRenogyData)
                 it.append(dummyRenogyData)
+                val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
+                expect(true) { result.size in 1..3 }
+                expect(100L) { result[0].records[0].value }
             }
         }
-        // @todo select the data to check that they have been written
     }
 }
