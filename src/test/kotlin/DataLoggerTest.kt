@@ -31,6 +31,7 @@ class DataLoggerTest : DynaTest({
                 container.start()
             }
             afterGroup { container.stop() }
+            // @todo delete the data between the tests
             test("smoke") {
                 PostgresDataLogger(container.jdbcUrl, container.username, container.password).use {
                     it.init()
@@ -46,6 +47,7 @@ class DataLoggerTest : DynaTest({
                     it.append(dummyRenogyData)
                 }
             }
+            // @todo select the data to check that they have been written
         }
         group("InfluxDB2DataLogger") {
             val token = "tgPiZMSv30US40AX_v9zV-dTexHeJ1u4zNCQYEGNW13DNbLiCUFxpVLPZZtX7C0f8UfN84oS3jRxaKWlAICKmA=="
@@ -56,6 +58,7 @@ class DataLoggerTest : DynaTest({
                 container.start()
             }
             afterGroup { container.stop() }
+            // @todo delete the data between the tests
             test("smoke") {
                 InfluxDB2Logger(container.url, container.organization, container.bucket, token).use {
                     it.init()
@@ -70,6 +73,7 @@ class DataLoggerTest : DynaTest({
                     it.append(dummyRenogyData)
                 }
             }
+            // @todo select the data to check that they have been written
         }
     }
 })

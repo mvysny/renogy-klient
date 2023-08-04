@@ -224,6 +224,50 @@ Values for the `ChargingState` column:
 | 5 | FloatingChargingMode | After the constant voltage stage (BoostChargingMode/EqualizingChargingMode), the controller will reduce the battery voltage to a float voltage set point. Once the battery is fully charged, there will be no more chemical reactions and all the charge current would turn into heat or gas. Because of this, the charge controller will reduce the voltage charge to smaller quantity, while lightly charging the battery. The purpose for this is to offset the power consumption while maintaining a full battery storage capacity. In the event that a load drawn from the battery exceeds the charge current, the controller will no longer be able to maintain the battery to a Float set point and the controller will end the float charge stage and refer back to bulk charging (MpptChargingMode). |
 | 6 | CurrentLimiting | Overpower |
 
+## InfluxDB 2
+
+[InfluxDB 2](https://www.influxdata.com/lp/influxdb-database) is also supported. It's a time-based database, and therefore
+a perfect fit for our purposes. It offers blazing-fast queries and also offer charting capabilities.
+Yet I'd still recommend to go with Grafana since Grafana charting capabilities are on a much better level. Also,
+InfluxDB2 consumes up to 100mb of RAM.
+
+Run InfluxDB2 easily in docker:
+```bash
+mkdir db
+docker run --rm -ti -p 8086:8086 \
+	-v ./db:/var/lib/influxdb2 \
+	-e DOCKER_INFLUXDB_INIT_MODE=setup \
+	-e DOCKER_INFLUXDB_INIT_USERNAME=admin \
+	-e DOCKER_INFLUXDB_INIT_PASSWORD=mysecretpassword \
+	-e DOCKER_INFLUXDB_INIT_ORG=my_org \
+	-e DOCKER_INFLUXDB_INIT_BUCKET=solar \
+	influxdb:2.7.1
+```
+
+In order to create a token, head to [localhost:8086](http://localhost:8086), then to "Load Data", "API Tokens",
+generate the all-access API token and write it down; it looks like this:
+`6SCVEHn-2P8L2VBeBf_al_hLPldD-yjypErsi8SW-4aaT4KPOiaubwS7RwRVRTMazquTd7rmeeE1DsEZeFR64g==`.
+
+Now you can configure InfluxDB2 to accept this access token:
+```bash
+docker run --rm -ti -p 8086:8086 \
+	-v ./db:/var/lib/influxdb2 \
+	-e DOCKER_INFLUXDB_INIT_MODE=setup \
+	-e DOCKER_INFLUXDB_INIT_USERNAME=admin \
+	-e DOCKER_INFLUXDB_INIT_PASSWORD=mysecretpassword \
+	-e DOCKER_INFLUXDB_INIT_ORG=my_org \
+	-e DOCKER_INFLUXDB_INIT_BUCKET=solar \
+	-e DOCKER_INFLUXDB_INIT_ADMIN_TOKEN="6SCVEHn-2P8L2VBeBf_al_hLPldD-yjypErsi8SW-4aaT4KPOiaubwS7RwRVRTMazquTd7rmeeE1DsEZeFR64g==" \
+	influxdb:2.7.1
+```
+See the [influxdb Docker Hub documentation](https://hub.docker.com/_/influxdb) for more details.
+
+Now you can run the renogy-klient:
+
+```bash
+$ ./renogy-klient --influx http://localhost:8086 --influxorg my_org --influxbucket solar --influxtoken "token" /dev/ttyUSB0
+```
+
 ## Dummy Renogy Device
 
 Use `dummy` instead
