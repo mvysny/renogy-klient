@@ -43,6 +43,8 @@ dependencies {
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
     testImplementation("org.testcontainers:postgresql:1.17.6")
+    testImplementation("com.github.mvysny.vokorm:vok-orm:2.0")
+    testImplementation("com.zaxxer:HikariCP:5.0.1")
     testImplementation("org.testcontainers:influxdb:1.17.6")
 }
 
