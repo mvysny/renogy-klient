@@ -2,7 +2,6 @@ import clients.dummyRenogyData
 import com.github.mvysny.dynatest.DynaTest
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.InfluxDBContainer
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import java.io.File
 
@@ -24,31 +23,7 @@ class DataLoggerTest : DynaTest({
         }
     }
     if (DockerClientFactory.instance().isDockerAvailable) {
-        group("PostgresDataLogger") {
-            lateinit var container: PostgreSQLContainer<*>
-            beforeGroup {
-                container = PostgreSQLContainer("postgres:15.3")
-                container.start()
-            }
-            afterGroup { container.stop() }
-            // @todo delete the data between the tests
-            test("smoke") {
-                PostgresDataLogger(container.jdbcUrl, container.username, container.password).use {
-                    it.init()
-                    it.append(dummyRenogyData)
-                }
-            }
-            // tests https://github.com/mvysny/renogy-klient/issues/1
-            test("upsert") {
-                PostgresDataLogger(container.jdbcUrl, container.username, container.password).use {
-                    it.init()
-                    it.append(dummyRenogyData)
-                    it.append(dummyRenogyData)
-                    it.append(dummyRenogyData)
-                }
-            }
-            // @todo select the data to check that they have been written
-        }
+        postgresDataLoggerTests()
         group("InfluxDB2DataLogger") {
             val token = "tgPiZMSv30US40AX_v9zV-dTexHeJ1u4zNCQYEGNW13DNbLiCUFxpVLPZZtX7C0f8UfN84oS3jRxaKWlAICKmA=="
             lateinit var container: InfluxDBContainer<*>
