@@ -36,9 +36,6 @@ dependencies {
     implementation("org.postgresql:postgresql:42.5.4")
     // connection pooling & liveness testing
     implementation("com.zaxxer:HikariCP:5.0.1")
-    // InfluxDB 2 support
-    // @todo has shitload of dependencies; replace with http: https://docs.influxdata.com/influxdb/v2.7/write-data/developer-tools/api/
-    implementation("com.influxdb:influxdb-client-kotlin:6.10.0")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
@@ -46,6 +43,9 @@ dependencies {
     testImplementation("com.github.mvysny.vokorm:vok-orm:2.0")
     testImplementation("com.zaxxer:HikariCP:5.0.1")
     testImplementation("org.testcontainers:influxdb:1.18.0")
+    // InfluxDB 2 support
+    // has shitload of dependencies; use for tests only
+    testImplementation("com.influxdb:influxdb-client-kotlin:6.10.0")
 }
 
 tasks.withType<Test> {

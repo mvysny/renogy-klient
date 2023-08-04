@@ -1,8 +1,4 @@
 import clients.RenogyData
-import com.influxdb.client.InfluxDBClient
-import com.influxdb.client.InfluxDBClientFactory
-import com.influxdb.client.domain.WritePrecision
-import com.influxdb.client.write.Point
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.slf4j.LoggerFactory
@@ -12,13 +8,16 @@ import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
-import java.sql.Connection
-import java.sql.DriverManager
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpRequest.BodyPublishers
+import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandlers
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import javax.sql.DataSource
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -310,56 +309,61 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
  * @property token the access token
  */
 class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val token: String) : DataLogger {
-
-    private lateinit var client: InfluxDBClient
+    private val measurement = "renogy"
+    private val writeUri = URI("$url/api/v2/write?org=$org&bucket=$bucket&precision=ns")
+    private lateinit var client: HttpClient
 
     override fun init() {
-        client = InfluxDBClientFactory.create(url, token.toCharArray(), org, bucket)
+        client = HttpClient.newHttpClient()
         log.debug("Logging into $url")
     }
 
     override fun append(data: RenogyData) {
-        client.makeWriteApi().use { writeApi ->
-            val point = Point.measurement("renogy")
-            point.time(Instant.now().toEpochMilli(), WritePrecision.MS)
-
-            fun add(col: String, value: Any?) {
-                if (value != null) {
-                    when (value) {
-                        is Number -> point.addField(col, value)
-                        is UShort -> point.addField(col, value.toLong())
-                        is UInt -> point.addField(col, value.toLong())
-                        is UByte -> point.addField(col, value.toLong())
-                        else -> point.addField(col, value.toString())
-                    }
+        // the line protocol: https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/
+        val fields = mutableListOf<String>()
+        fun add(col: String, value: Any?) {
+            if (value != null) {
+                val formatted = when (value) {
+                    is UShort, is UInt, is UByte, is ULong, is Short, is Int, is Byte, is Long -> "${value}i"
+                    is String -> "\"$value\""
+                    else -> value.toString()
                 }
+                fields.add("$col=$formatted")
             }
-
-            add("BatterySOC", data.powerStatus.batterySOC)
-            add("BatteryVoltage", data.powerStatus.batteryVoltage)
-            add("ChargingCurrentToBattery", data.powerStatus.chargingCurrentToBattery)
-            add("BatteryTemp", data.powerStatus.batteryTemp)
-            add("ControllerTemp", data.powerStatus.controllerTemp)
-            add("SolarPanelVoltage", data.powerStatus.solarPanelVoltage)
-            add("SolarPanelCurrent", data.powerStatus.solarPanelCurrent)
-            add("SolarPanelPower", data.powerStatus.solarPanelPower)
-            add("Daily_BatteryMinVoltage", data.dailyStats.batteryMinVoltage)
-            add("Daily_BatteryMaxVoltage", data.dailyStats.batteryMaxVoltage)
-            add("Daily_MaxChargingCurrent", data.dailyStats.maxChargingCurrent)
-            add("Daily_MaxChargingPower", data.dailyStats.maxChargingPower)
-            add("Daily_ChargingAmpHours", data.dailyStats.chargingAh)
-            add("Daily_PowerGeneration", data.dailyStats.powerGenerationWh)
-            add("Stats_DaysUp", data.historicalData.daysUp)
-            add("Stats_BatteryOverDischargeCount", data.historicalData.batteryOverDischargeCount)
-            add("Stats_BatteryFullChargeCount", data.historicalData.batteryFullChargeCount)
-            add("Stats_TotalChargingBatteryAH", data.historicalData.totalChargingBatteryAH)
-            add("Stats_CumulativePowerGenerationWH", data.historicalData.cumulativePowerGenerationWH)
-            add("ChargingState", data.status.chargingState?.value)
-            add("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
-
-            writeApi.writePoint(point)
-            writeApi.flush()
         }
+
+        add("BatterySOC", data.powerStatus.batterySOC)
+        add("BatteryVoltage", data.powerStatus.batteryVoltage)
+        add("ChargingCurrentToBattery", data.powerStatus.chargingCurrentToBattery)
+        add("BatteryTemp", data.powerStatus.batteryTemp)
+        add("ControllerTemp", data.powerStatus.controllerTemp)
+        add("SolarPanelVoltage", data.powerStatus.solarPanelVoltage)
+        add("SolarPanelCurrent", data.powerStatus.solarPanelCurrent)
+        add("SolarPanelPower", data.powerStatus.solarPanelPower)
+        add("Daily_BatteryMinVoltage", data.dailyStats.batteryMinVoltage)
+        add("Daily_BatteryMaxVoltage", data.dailyStats.batteryMaxVoltage)
+        add("Daily_MaxChargingCurrent", data.dailyStats.maxChargingCurrent)
+        add("Daily_MaxChargingPower", data.dailyStats.maxChargingPower)
+        add("Daily_ChargingAmpHours", data.dailyStats.chargingAh)
+        add("Daily_PowerGeneration", data.dailyStats.powerGenerationWh)
+        add("Stats_DaysUp", data.historicalData.daysUp)
+        add("Stats_BatteryOverDischargeCount", data.historicalData.batteryOverDischargeCount)
+        add("Stats_BatteryFullChargeCount", data.historicalData.batteryFullChargeCount)
+        add("Stats_TotalChargingBatteryAH", data.historicalData.totalChargingBatteryAH)
+        add("Stats_CumulativePowerGenerationWH", data.historicalData.cumulativePowerGenerationWH)
+        add("ChargingState", data.status.chargingState?.value)
+        add("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
+
+        val line = "\n$measurement ${fields.joinToString(",")} ${System.currentTimeMillis() * 1_000_000}\n"
+
+        val request: HttpRequest = HttpRequest.newBuilder(writeUri)
+            .header("Authorization", "Token $token")
+            .header("Content-Type", "text/plain; charset=utf-8")
+            .header("Accept", "application/json")
+            .POST(BodyPublishers.ofString(line))
+            .build()
+        val response: HttpResponse<String> = client.send(request, BodyHandlers.ofString())
+        check(response.statusCode() == 200 || response.statusCode() == 204) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
@@ -367,9 +371,7 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
         // @todo evaluate possibility of deleting old data
     }
 
-    override fun close() {
-        client.close()
-    }
+    override fun close() {}
 
     override fun toString(): String =
         "InfluxDB2Logger($url, org=$org, bucket=$bucket)"
