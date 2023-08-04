@@ -360,11 +360,16 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
 
         val line = "\n$measurement ${fields.joinToString(",")} ${System.currentTimeMillis() * 1_000_000}\n"
 
-        val request: HttpRequest = HttpRequest.newBuilder(writeUri)
+        HttpRequest.newBuilder(writeUri)
             .header("Authorization", "Token $token")
             .header("Content-Type", "text/plain; charset=utf-8")
             .header("Accept", "application/json")
-            .POST(BodyPublishers.ofString(line))
+            .execPost(line)
+    }
+
+    private fun HttpRequest.Builder.execPost(content: String) {
+        log.debug("POSTing $content")
+        val request = POST(BodyPublishers.ofString(content))
             .build()
         val response: HttpResponse<String> = client.send(request, BodyHandlers.ofString())
         check(response.statusCode() in 200..299) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
@@ -376,13 +381,10 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
             "${LocalDateTime.now().withNano(0).minusDays(days.toLong())}Z",
             predicate = """_measurement="$measurement""""
         )
-        val request: HttpRequest = HttpRequest.newBuilder(deleteUri)
+        HttpRequest.newBuilder(deleteUri)
             .header("Authorization", "Token $token")
             .header("Content-Type", "application/json")
-            .POST(BodyPublishers.ofString(Json.encodeToString(reqObject)))
-            .build()
-        val response: HttpResponse<String> = client.send(request, BodyHandlers.ofString())
-        check(response.statusCode() in 200..299) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
+            .execPost(Json.encodeToString(reqObject))
     }
 
     override fun close() {}
