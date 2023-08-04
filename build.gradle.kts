@@ -27,13 +27,13 @@ dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.1")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("com.fazecast:jSerialComm:2.9.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
     // logging
     implementation("org.slf4j:slf4j-simple:2.0.7")
 
     // PostgreSQL support
-    implementation("org.postgresql:postgresql:42.5.1")
+    implementation("org.postgresql:postgresql:42.5.4")
     // connection pooling & liveness testing
     implementation("com.zaxxer:HikariCP:5.0.1")
 
