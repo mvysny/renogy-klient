@@ -13,6 +13,10 @@ import java.io.File
  * @property postgres if not null, appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. `jdbc:postgresql://localhost:5432/postgres`
  * @property postgresUsername PostgreSQL username
  * @property postgresPassword PostgreSQL password
+ * @property influx if not null, appends status to an InfluxDB2 database, disables stdout status logging. Accepts the connection url, e.g. `http://localhost:8086`
+ * @property influxOrg the InfluxDB2 organization, e.g. my_org
+ * @property influxBucket the InfluxDB2 bucket, e.g. solar
+ * @property influxToken the InfluxDB2 access token
  * @property stateFile overwrites status to file other than the default 'status.json'
  * @property pollInterval in seconds: how frequently to poll the controller for data, defaults to 10
  * @property pruneLog Prunes log entries older than x days, defaults to 365. Applies to databases only; a CSV file is never pruned.
@@ -26,6 +30,10 @@ data class Args(
     val postgres: String?,
     val postgresUsername: String?,
     val postgresPassword: String?,
+    val influx: String?,
+    val influxOrg: String?,
+    val influxBucket: String?,
+    val influxToken: String?,
     val stateFile: File,
     val pollInterval: Int,
     val pruneLog: Int,
@@ -50,6 +58,12 @@ data class Args(
             if (postgres != null) {
                 result.dataLoggers.add(PostgresDataLogger(postgres, postgresUsername, postgresPassword))
             }
+            if (influx != null) {
+                requireNotNull(influxOrg) { "influxorg must be specified" }
+                requireNotNull(influxBucket) { "influxbucket must be specified" }
+                requireNotNull(influxToken) { "influxtoken must be specified" }
+                result.dataLoggers.add(InfluxDB2Logger(influx, influxOrg, influxBucket, influxToken))
+            }
             if (result.dataLoggers.isEmpty()) {
                 result.dataLoggers.add(StdoutCSVDataLogger(utc))
             }
@@ -70,6 +84,10 @@ data class Args(
             val postgres by parser.option(ArgType.String, fullName = "postgres", description = "appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. jdbc:postgresql://localhost:5432/postgres")
             val postgresUsername by parser.option(ArgType.String, fullName = "pguser", description = "PostgreSQL user name")
             val postgresPassword by parser.option(ArgType.String, fullName = "pgpass", description = "PostgreSQL password")
+            val influx by parser.option(ArgType.String, fullName = "influx", description = "appends status to an InfluxDB2 database, disables stdout status logging. Accepts the connection url, e.g. `http://localhost:8086`")
+            val influxOrg by parser.option(ArgType.String, fullName = "influxorg", description = "the InfluxDB2 organization, e.g. my_org. Required if Influx is used.")
+            val influxBucket by parser.option(ArgType.String, fullName = "influxbucket", description = "the InfluxDB2 bucket, e.g. solar. Required if Influx is used.")
+            val influxToken by parser.option(ArgType.String, fullName = "influxtoken", description = "the InfluxDB2 access token. Required if Influx is used.")
             val statefile by parser.option(ArgType.String, fullName = "statefile", description = "overwrites status to file other than the default 'status.json'")
             val pollingInterval by parser.option(ArgType.Int, fullName = "pollinterval", shortName = "i", description = "in seconds: how frequently to poll the controller for data, defaults to 10")
             val pruneLog by parser.option(ArgType.Int, fullName = "prunelog", description = "prunes log entries older than x days, defaults to 365")
@@ -84,6 +102,10 @@ data class Args(
                 postgres,
                 postgresUsername,
                 postgresPassword,
+                influx,
+                influxOrg,
+                influxBucket,
+                influxToken,
                 (statefile ?: "status.json").toFile(),
                 pollingInterval ?: 10,
                 pruneLog ?: 365,

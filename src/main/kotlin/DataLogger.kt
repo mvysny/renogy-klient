@@ -1,4 +1,8 @@
 import clients.RenogyData
+import com.influxdb.client.InfluxDBClient
+import com.influxdb.client.InfluxDBClientFactory
+import com.influxdb.client.domain.WritePrecision
+import com.influxdb.client.write.Point
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.slf4j.LoggerFactory
@@ -295,5 +299,82 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
 
     companion object {
         private val log = LoggerFactory.getLogger(PostgresDataLogger::class.java)
+    }
+}
+
+/**
+ * Logs data into an InfluxDB2 database.
+ * @property url the InfluxDB2 URL, e.g. `http://localhost:8086`
+ * @property org the organization, e.g. `my_org`
+ * @property bucket the bucket, e.g. `solar`
+ * @property token the access token
+ */
+class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val token: String) : DataLogger {
+
+    private lateinit var client: InfluxDBClient
+
+    override fun init() {
+        client = InfluxDBClientFactory.create(url, token.toCharArray(), org, bucket)
+        log.debug("Logging into $url")
+    }
+
+    override fun append(data: RenogyData) {
+        client.makeWriteApi().use { writeApi ->
+            val point = Point.measurement("renogy")
+            point.time(Instant.now().toEpochMilli(), WritePrecision.MS)
+
+            fun add(col: String, value: Any?) {
+                if (value != null) {
+                    when (value) {
+                        is Number -> point.addField(col, value)
+                        is UShort -> point.addField(col, value.toLong())
+                        is UInt -> point.addField(col, value.toLong())
+                        is UByte -> point.addField(col, value.toLong())
+                        else -> point.addField(col, value.toString())
+                    }
+                }
+            }
+
+            add("BatterySOC", data.powerStatus.batterySOC)
+            add("BatteryVoltage", data.powerStatus.batteryVoltage)
+            add("ChargingCurrentToBattery", data.powerStatus.chargingCurrentToBattery)
+            add("BatteryTemp", data.powerStatus.batteryTemp)
+            add("ControllerTemp", data.powerStatus.controllerTemp)
+            add("SolarPanelVoltage", data.powerStatus.solarPanelVoltage)
+            add("SolarPanelCurrent", data.powerStatus.solarPanelCurrent)
+            add("SolarPanelPower", data.powerStatus.solarPanelPower)
+            add("Daily_BatteryMinVoltage", data.dailyStats.batteryMinVoltage)
+            add("Daily_BatteryMaxVoltage", data.dailyStats.batteryMaxVoltage)
+            add("Daily_MaxChargingCurrent", data.dailyStats.maxChargingCurrent)
+            add("Daily_MaxChargingPower", data.dailyStats.maxChargingPower)
+            add("Daily_ChargingAmpHours", data.dailyStats.chargingAh)
+            add("Daily_PowerGeneration", data.dailyStats.powerGenerationWh)
+            add("Stats_DaysUp", data.historicalData.daysUp)
+            add("Stats_BatteryOverDischargeCount", data.historicalData.batteryOverDischargeCount)
+            add("Stats_BatteryFullChargeCount", data.historicalData.batteryFullChargeCount)
+            add("Stats_TotalChargingBatteryAH", data.historicalData.totalChargingBatteryAH)
+            add("Stats_CumulativePowerGenerationWH", data.historicalData.cumulativePowerGenerationWH)
+            add("ChargingState", data.status.chargingState?.value)
+            add("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
+
+            writeApi.writePoint(point)
+            writeApi.flush()
+        }
+    }
+
+    override fun deleteRecordsOlderThan(days: Int) {
+        // do nothing - InfluxDB2 has its own retention policy
+        // @todo evaluate possibility of deleting old data
+    }
+
+    override fun close() {
+        client.close()
+    }
+
+    override fun toString(): String =
+        "InfluxDB2Logger($url, org=$org, bucket=$bucket)"
+
+    companion object {
+        private val log = LoggerFactory.getLogger(InfluxDB2Logger::class.java)
     }
 }
