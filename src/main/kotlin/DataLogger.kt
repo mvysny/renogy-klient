@@ -1,6 +1,9 @@
 import clients.RenogyData
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import utils.CSVWriter
 import utils.closeQuietly
@@ -311,6 +314,7 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
 class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val token: String) : DataLogger {
     private val measurement = "renogy"
     private val writeUri = URI("$url/api/v2/write?org=$org&bucket=$bucket&precision=ns")
+    private val deleteUri = URI("$url/api/v2/delete?org=$org&bucket=$bucket")
     private lateinit var client: HttpClient
 
     override fun init() {
@@ -363,12 +367,22 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
             .POST(BodyPublishers.ofString(line))
             .build()
         val response: HttpResponse<String> = client.send(request, BodyHandlers.ofString())
-        check(response.statusCode() == 200 || response.statusCode() == 204) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
+        check(response.statusCode() in 200..299) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
-        // do nothing - InfluxDB2 has its own retention policy
-        // @todo evaluate possibility of deleting old data
+        val reqObject = InfluxDBDeleteRequest(
+            "2000-01-01T00:00:00Z",
+            "${LocalDateTime.now().withNano(0).minusDays(days.toLong())}Z",
+            predicate = """_measurement="$measurement""""
+        )
+        val request: HttpRequest = HttpRequest.newBuilder(deleteUri)
+            .header("Authorization", "Token $token")
+            .header("Content-Type", "application/json")
+            .POST(BodyPublishers.ofString(Json.encodeToString(reqObject)))
+            .build()
+        val response: HttpResponse<String> = client.send(request, BodyHandlers.ofString())
+        check(response.statusCode() in 200..299) { "InfluxDB2 failed: ${response.statusCode()} ${response.body()}" }
     }
 
     override fun close() {}
@@ -380,3 +394,16 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
         private val log = LoggerFactory.getLogger(InfluxDB2Logger::class.java)
     }
 }
+
+/**
+ * See https://docs.influxdata.com/influxdb/v2.7/write-data/delete-data/
+ * @property start e.g. `2020-03-01T00:00:00Z`
+ * @property stop e.g. `2020-03-01T00:00:00Z`
+ * @property predicate e.g. `_measurement="example-measurement" AND tag="foo"`
+ */
+@Serializable
+data class InfluxDBDeleteRequest(
+    val start: String,
+    val stop: String,
+    val predicate: String? = null
+)

@@ -41,6 +41,7 @@ fun DynaNodeGroup.postgresDataLoggerTests() {
                 expect(1) { logs.size }
                 expect(100) { logs[0].batterySOC }
                 expect(25.6f) { logs[0].batteryVoltage }
+                it.deleteRecordsOlderThan()
             }
         }
         // tests https://github.com/mvysny/renogy-klient/issues/1

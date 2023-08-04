@@ -38,6 +38,7 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
                 val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
                 expect(1) { result.size }
                 expect(100L) { result[0].records[0].value }
+                it.deleteRecordsOlderThan()
             }
         }
         test("upsert") {
