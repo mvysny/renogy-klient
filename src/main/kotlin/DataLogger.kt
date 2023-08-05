@@ -18,6 +18,7 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -378,7 +379,7 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
     override fun deleteRecordsOlderThan(days: Int) {
         val reqObject = InfluxDBDeleteRequest(
             "2000-01-01T00:00:00Z",
-            "${LocalDateTime.now().withNano(0).minusDays(days.toLong())}Z",
+            "${LocalDate.now().minusDays(days.toLong())}T00:00:00Z",
             predicate = """_measurement="$measurement""""
         )
         HttpRequest.newBuilder(deleteUri)
