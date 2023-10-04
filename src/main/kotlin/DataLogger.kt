@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariDataSource
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
 import utils.CSVWriter
 import utils.closeQuietly
 import java.io.Closeable
@@ -129,7 +128,7 @@ class CompositeDataLogger : DataLogger {
     override fun toString(): String = "CompositeDataLogger($dataLoggers)"
 
     companion object {
-        private val log = LoggerFactory.getLogger(CompositeDataLogger::class.java)
+        private val log = Log<CompositeDataLogger>()
     }
 }
 
@@ -166,7 +165,7 @@ class CSVDataLogger(val file: File, val utc: Boolean) : DataLogger {
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(CSVDataLogger::class.java)
+        private val log = Log<CSVDataLogger>()
     }
 }
 
@@ -301,7 +300,7 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
         "PostgresDataLogger($url)"
 
     companion object {
-        private val log = LoggerFactory.getLogger(PostgresDataLogger::class.java)
+        private val log = Log<PostgresDataLogger>()
     }
 }
 
@@ -394,7 +393,7 @@ class InfluxDB2Logger(val url: String, val org: String, val bucket: String, val 
         "InfluxDB2Logger($url, org=$org, bucket=$bucket)"
 
     companion object {
-        private val log = LoggerFactory.getLogger(InfluxDB2Logger::class.java)
+        private val log = Log<InfluxDB2Logger>()
     }
 }
 

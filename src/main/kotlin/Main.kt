@@ -1,5 +1,4 @@
 import clients.*
-import org.slf4j.LoggerFactory
 import utils.scheduleAtFixedRate
 import utils.scheduleAtTimeOfDay
 import java.time.LocalTime
@@ -33,7 +32,7 @@ private fun mainLoop(
     args: Args,
     dataLogger: DataLogger
 ) {
-    val log = LoggerFactory.getLogger("Main")
+    val log = Log("Main")
     log.info("Accessing solar controller via $client")
     val systemInfo: SystemInfo = client.getSystemInfo()
     log.info("Solar Controller: $systemInfo")

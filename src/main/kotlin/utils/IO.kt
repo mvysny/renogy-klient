@@ -1,7 +1,7 @@
 package utils
 
+import Log
 import com.fazecast.jSerialComm.SerialPort
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -47,7 +47,7 @@ fun IO.drain(timeout: Duration = 1.seconds) {
 }
 
 fun IO.drainQuietly(timeout: Duration = 1.seconds) {
-    val log = LoggerFactory.getLogger(javaClass)
+    val log = Log(javaClass)
     log.debug("Draining $this")
     try {
         drain(timeout)
@@ -112,6 +112,6 @@ fun Closeable.closeQuietly() {
     try {
         close()
     } catch (e: Exception) {
-        LoggerFactory.getLogger(javaClass).warn("Close failed: $e", e)
+        Log(javaClass).warn("Close failed: $e", e)
     }
 }

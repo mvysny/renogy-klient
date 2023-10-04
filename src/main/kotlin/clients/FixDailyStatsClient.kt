@@ -1,6 +1,6 @@
 package clients
 
-import org.slf4j.LoggerFactory
+import Log
 import java.time.LocalDate
 
 /**
@@ -69,7 +69,7 @@ class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate
     override fun toString(): String = "FixDailyStatsClient($delegate)"
 
     companion object {
-        private val log = LoggerFactory.getLogger(FixDailyStatsClient::class.java)
+        private val log = Log<FixDailyStatsClient>()
     }
 }
 

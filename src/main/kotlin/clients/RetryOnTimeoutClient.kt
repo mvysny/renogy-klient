@@ -1,6 +1,6 @@
 package clients
 
-import org.slf4j.LoggerFactory
+import Log
 import utils.*
 import java.io.File
 import kotlin.time.Duration
@@ -66,6 +66,6 @@ class RetryOnTimeoutClient(val file: File, val timeout: Duration) : RenogyClient
     override fun toString(): String = "RetryOnTimeoutClient($file)"
 
     companion object {
-        private val log = LoggerFactory.getLogger(RetryOnTimeoutClient::class.java)
+        private val log = Log<RetryOnTimeoutClient>()
     }
 }

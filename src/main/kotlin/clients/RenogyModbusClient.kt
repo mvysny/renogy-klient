@@ -1,9 +1,7 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package clients
 
+import Log
 import com.github.mvysny.unsigned.*
-import org.slf4j.LoggerFactory
 import utils.*
 import kotlin.time.Duration
 
@@ -197,6 +195,6 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
 
     companion object {
         private val COMMAND_READ_REGISTER: Byte = 0x03
-        private val log = LoggerFactory.getLogger(RenogyModbusClient::class.java)
+        private val log = Log<RenogyModbusClient>()
     }
 }

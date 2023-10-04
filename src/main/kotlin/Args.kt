@@ -1,5 +1,3 @@
-import org.slf4j.LoggerFactory
-import org.slf4j.simple.SimpleLoggerConfiguration
 import picocli.CommandLine
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
@@ -92,6 +90,7 @@ data class Args(
     }
 
     companion object {
+        private val log = Log<Args>()
         fun parse(aargs: Array<String>): Args {
             val args = Args()
             val cli = CommandLine(args)
@@ -99,17 +98,14 @@ data class Args(
             try {
                 cli.parseArgs(*aargs)
             } catch (e: Exception) {
-                e.printStackTrace()
+                log.error("Failed to parse command line parameters", e)
                 cli.usage(System.out)
                 exitProcess(1)
             }
 
             args.validate()
 
-            if (args.verbose) {
-                setDefaultLogLevelDebug()
-            }
-            val log = LoggerFactory.getLogger(Args::class.java)
+            Log.isDebugEnabled = args.verbose
             log.debug(args.toString())
             return args
         }
@@ -117,8 +113,3 @@ data class Args(
 }
 
 private fun String.toFile(): File = File(this)
-private fun setDefaultLogLevelDebug() {
-    val f = SimpleLoggerConfiguration::class.java.getDeclaredField("DEFAULT_LOG_LEVEL_DEFAULT")
-    f.isAccessible = true
-    f.set(null, 10) // LocationAwareLogger.DEBUG_INT
-}
