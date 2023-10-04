@@ -25,7 +25,7 @@ java {
 
 dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+    implementation("info.picocli:picocli:4.7.5")
     implementation("com.fazecast:jSerialComm:2.9.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 

@@ -1,9 +1,11 @@
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
 import org.slf4j.LoggerFactory
 import org.slf4j.simple.SimpleLoggerConfiguration
+import picocli.CommandLine
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import utils.closeQuietly
 import java.io.File
+import kotlin.system.exitProcess
 
 /**
  * @property device the file name of the serial device to communicate with, e.g. `/dev/ttyUSB0`. Pass in `dummy` for a dummy Renogy client
@@ -23,23 +25,38 @@ import java.io.File
  * @property verbose Print verbosely what I'm doing
  */
 data class Args(
-    val device: File,
-    val printStatusOnly: Boolean,
-    val utc: Boolean,
-    val csv: File?,
-    val postgres: String?,
-    val postgresUsername: String?,
-    val postgresPassword: String?,
-    val influx: String?,
-    val influxOrg: String?,
-    val influxBucket: String?,
-    val influxToken: String?,
-    val stateFile: File,
-    val pollInterval: Int,
-    val pruneLog: Int,
-    val verbose: Boolean
+    @field:Parameters(paramLabel = "DEVICE", description = ["the file name of the serial device to communicate with, e.g. `/dev/ttyUSB0`. Pass in `dummy` for a dummy Renogy client"])
+    var device: File? = null,
+    @field:Option(names = ["--status"], description = ["print the Renogy Rover status as JSON to stdout and quit"])
+    var printStatusOnly: Boolean = false,
+    @field:Option(names = ["--utc"], description = ["CSV: dump date in UTC instead of local, handy for Grafana"])
+    var utc: Boolean = false,
+    @field:Option(names = ["--csv"], description = ["appends status to a CSV file, disables stdout status logging"])
+    var csv: File? = null,
+    @field:Option(names = ["--postgres"], description = ["appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. jdbc:postgresql://localhost:5432/postgres"])
+    var postgres: String? = null,
+    @field:Option(names = ["--pguser"], description = ["PostgreSQL user name"])
+    var postgresUsername: String? = null,
+    @field:Option(names = ["--pgpass"], description = ["PostgreSQL password"])
+    var postgresPassword: String? = null,
+    @field:Option(names = ["--influx"], description = ["appends status to an InfluxDB2 database, disables stdout status logging. Accepts the connection url, e.g. `http://localhost:8086`"])
+    var influx: String? = null,
+    @field:Option(names = ["--influxorg"], description = ["the InfluxDB2 organization, e.g. my_org. Required if Influx is used."])
+    var influxOrg: String? = null,
+    @field:Option(names = ["--influxbucket"], description = ["the InfluxDB2 bucket, e.g. solar. Required if Influx is used."])
+    var influxBucket: String? = null,
+    @field:Option(names = ["--influxtoken"], description = ["the InfluxDB2 access token. Required if Influx is used."])
+    var influxToken: String? = null,
+    @field:Option(names = ["--statefile"], description = ["overwrites status to file other than the default 'status.json'"])
+    var stateFile: File = "status.json".toFile(),
+    @field:Option(names = ["--pollinterval", "-i"], description = ["in seconds: how frequently to poll the controller for data, defaults to 10"])
+    var pollInterval: Int = 10,
+    @field:Option(names = ["--prunelog"], description = ["prunes log entries older than x days, defaults to 365"])
+    var pruneLog: Int = 365,
+    @field:Option(names = ["--verbose"], description = ["Print verbosely what I'm doing"])
+    var verbose: Boolean = false
 ) {
-    init {
+    fun validate() {
         require(pollInterval > 0) { "pollInterval: must be 1 or greater but was $pollInterval" }
         require(pruneLog > 0) { "pruneLog: must be 1 or greater but was $pruneLog" }
     }
@@ -47,22 +64,22 @@ data class Args(
     /**
      * If 'true' we'll feed the data from a dummy device. Useful for testing.
      */
-    val isDummy: Boolean get() = device.path == "dummy"
+    val isDummy: Boolean get() = device!!.path == "dummy"
 
     fun newDataLogger(): DataLogger {
         val result = CompositeDataLogger()
         try {
             if (csv != null) {
-                result.dataLoggers.add(CSVDataLogger(csv, utc))
+                result.dataLoggers.add(CSVDataLogger(csv!!, utc))
             }
             if (postgres != null) {
-                result.dataLoggers.add(PostgresDataLogger(postgres, postgresUsername, postgresPassword))
+                result.dataLoggers.add(PostgresDataLogger(postgres!!, postgresUsername, postgresPassword))
             }
             if (influx != null) {
                 requireNotNull(influxOrg) { "influxorg must be specified" }
                 requireNotNull(influxBucket) { "influxbucket must be specified" }
                 requireNotNull(influxToken) { "influxtoken must be specified" }
-                result.dataLoggers.add(InfluxDB2Logger(influx, influxOrg, influxBucket, influxToken))
+                result.dataLoggers.add(InfluxDB2Logger(influx!!, influxOrg!!, influxBucket!!, influxToken!!))
             }
             if (result.dataLoggers.isEmpty()) {
                 result.dataLoggers.add(StdoutCSVDataLogger(utc))
@@ -75,42 +92,19 @@ data class Args(
     }
 
     companion object {
-        fun parse(args: Array<String>): Args {
-            val parser = ArgParser("renogy-klient")
-            val device by parser.argument(ArgType.String, description = "the file name of the serial device to communicate with, e.g. /dev/ttyUSB0 . Pass in `dummy` for a dummy Renogy client")
-            val status by parser.option(ArgType.Boolean, fullName = "status", description = "print the Renogy Rover status as JSON to stdout and quit")
-            val utc by parser.option(ArgType.Boolean, fullName = "utc", description = "CSV: dump date in UTC instead of local, handy for Grafana")
-            val csv by parser.option(ArgType.String, fullName = "csv", description = "appends status to a CSV file, disables stdout status logging")
-            val postgres by parser.option(ArgType.String, fullName = "postgres", description = "appends status to a postgresql database, disables stdout status logging. Accepts the connection url, e.g. jdbc:postgresql://localhost:5432/postgres")
-            val postgresUsername by parser.option(ArgType.String, fullName = "pguser", description = "PostgreSQL user name")
-            val postgresPassword by parser.option(ArgType.String, fullName = "pgpass", description = "PostgreSQL password")
-            val influx by parser.option(ArgType.String, fullName = "influx", description = "appends status to an InfluxDB2 database, disables stdout status logging. Accepts the connection url, e.g. `http://localhost:8086`")
-            val influxOrg by parser.option(ArgType.String, fullName = "influxorg", description = "the InfluxDB2 organization, e.g. my_org. Required if Influx is used.")
-            val influxBucket by parser.option(ArgType.String, fullName = "influxbucket", description = "the InfluxDB2 bucket, e.g. solar. Required if Influx is used.")
-            val influxToken by parser.option(ArgType.String, fullName = "influxtoken", description = "the InfluxDB2 access token. Required if Influx is used.")
-            val statefile by parser.option(ArgType.String, fullName = "statefile", description = "overwrites status to file other than the default 'status.json'")
-            val pollingInterval by parser.option(ArgType.Int, fullName = "pollinterval", shortName = "i", description = "in seconds: how frequently to poll the controller for data, defaults to 10")
-            val pruneLog by parser.option(ArgType.Int, fullName = "prunelog", description = "prunes log entries older than x days, defaults to 365")
-            val verbose by parser.option(ArgType.Boolean, fullName = "verbose", description = "Print verbosely what I'm doing")
-            parser.parse(args)
+        fun parse(aargs: Array<String>): Args {
+            val args = Args()
+            val cli = CommandLine(args)
+            cli.commandName = "renogy-klient"
+            try {
+                cli.parseArgs(*aargs)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                cli.usage(System.out)
+                exitProcess(1)
+            }
 
-            val args = Args(
-                device.toFile(),
-                status == true,
-                utc == true,
-                csv?.toFile(),
-                postgres,
-                postgresUsername,
-                postgresPassword,
-                influx,
-                influxOrg,
-                influxBucket,
-                influxToken,
-                (statefile ?: "status.json").toFile(),
-                pollingInterval ?: 10,
-                pruneLog ?: 365,
-                verbose ?: false
-            )
+            args.validate()
 
             if (args.verbose) {
                 setDefaultLogLevelDebug()
