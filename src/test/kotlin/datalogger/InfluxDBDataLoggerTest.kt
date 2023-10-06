@@ -6,7 +6,6 @@ import com.github.mvysny.dynatest.DynaTestDsl
 import com.influxdb.client.InfluxDBClient
 import com.influxdb.client.InfluxDBClientFactory
 import com.influxdb.query.FluxTable
-import datalogger.InfluxDB2Logger
 import org.testcontainers.containers.InfluxDBContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.OffsetDateTime

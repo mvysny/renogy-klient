@@ -2,8 +2,6 @@ package datalogger
 
 import clients.dummyRenogyData
 import com.github.mvysny.dynatest.DynaTest
-import datalogger.CSVDataLogger
-import datalogger.StdoutCSVDataLogger
 import org.testcontainers.DockerClientFactory
 import java.io.File
 
