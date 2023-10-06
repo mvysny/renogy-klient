@@ -1,3 +1,5 @@
+package datalogger
+
 import clients.dummyRenogyData
 import com.github.mvysny.dynatest.DynaNodeGroup
 import com.github.mvysny.dynatest.DynaTestDsl
@@ -7,6 +9,7 @@ import com.gitlab.mvysny.jdbiorm.JdbiOrm
 import com.gitlab.mvysny.jdbiorm.Table
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import datalogger.PostgresDataLogger
 import org.jdbi.v3.core.mapper.reflect.ColumnName
 import org.testcontainers.containers.PostgreSQLContainer
 import kotlin.test.expect
