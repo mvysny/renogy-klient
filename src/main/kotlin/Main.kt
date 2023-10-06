@@ -13,7 +13,8 @@ fun main(_args: Array<String>) {
     val args = Args.parse(_args)
 
     args.newDataLogger().use { dataLogger ->
-        val client: RenogyClient = if (args.isDummy) DummyRenogyClient() else FixDailyStatsClient(RetryOnTimeoutClient(args.device!!, 1.seconds))
+        val timeout = 3.seconds // 1.seconds is too small, the app often times out on startup
+        val client: RenogyClient = if (args.isDummy) DummyRenogyClient() else FixDailyStatsClient(RetryOnTimeoutClient(args.device!!, timeout))
         client.use {
             if (args.printStatusOnly) {
                 val allData: RenogyData = client.getAllData()
