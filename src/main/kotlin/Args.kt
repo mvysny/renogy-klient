@@ -1,6 +1,7 @@
 import picocli.CommandLine
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
+import utils.Log
 import utils.closeQuietly
 import java.io.File
 import kotlin.system.exitProcess
