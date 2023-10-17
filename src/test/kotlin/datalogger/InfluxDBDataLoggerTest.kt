@@ -10,6 +10,7 @@ import org.testcontainers.containers.InfluxDBContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.OffsetDateTime
 import kotlin.test.expect
+import datalogger.influxdb.InfluxDBTinyClient
 
 @DynaTestDsl
 fun DynaNodeGroup.influxDBDataLoggerTests() {
@@ -34,7 +35,7 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
         beforeEach { client.deleteApi.delete(OffsetDateTime.now().minusYears(1), OffsetDateTime.now().plusYears(1), "", container.bucket, container.organization) }
 
         test("smoke") {
-            InfluxDB2Logger(container.url, container.organization, container.bucket, token).use {
+            InfluxDB2Logger(InfluxDBTinyClient(container.url, container.organization, container.bucket, token)).use {
                 it.init()
                 it.append(dummyRenogyData)
                 val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
@@ -44,7 +45,7 @@ fun DynaNodeGroup.influxDBDataLoggerTests() {
             }
         }
         test("upsert") {
-            InfluxDB2Logger(container.url, container.organization, container.bucket, token).use {
+            InfluxDB2Logger(InfluxDBTinyClient(container.url, container.organization, container.bucket, token)).use {
                 it.init()
                 it.append(dummyRenogyData)
                 it.append(dummyRenogyData)

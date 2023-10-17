@@ -1,4 +1,5 @@
 import datalogger.*
+import datalogger.influxdb.InfluxDBTinyClient
 import picocli.CommandLine
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
@@ -79,7 +80,7 @@ data class Args(
                 requireNotNull(influxOrg) { "influxorg must be specified" }
                 requireNotNull(influxBucket) { "influxbucket must be specified" }
                 requireNotNull(influxToken) { "influxtoken must be specified" }
-                result.dataLoggers.add(InfluxDB2Logger(influx!!, influxOrg!!, influxBucket!!, influxToken!!))
+                result.dataLoggers.add(InfluxDB2Logger(InfluxDBTinyClient(influx!!, influxOrg!!, influxBucket!!, influxToken!!)))
             }
             if (result.dataLoggers.isEmpty()) {
                 result.dataLoggers.add(StdoutCSVDataLogger(utc))
