@@ -26,6 +26,10 @@ fun main(_args: Array<String>) {
     }
 }
 
+object Main {
+    lateinit var scheduler: ScheduledExecutorService
+}
+
 /**
  * Runs the main loop: periodically polls [client] for new Solar Controller data,
  * then logs the data to the [dataLogger].
@@ -44,8 +48,8 @@ private fun mainLoop(
     dataLogger.init()
     dataLogger.deleteRecordsOlderThan(args.pruneLog)
 
-    val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-    scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
+    Main.scheduler = Executors.newSingleThreadScheduledExecutor()
+    Main.scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
         try {
             dataLogger.deleteRecordsOlderThan(args.pruneLog)
         } catch (e: Exception) {
@@ -53,7 +57,7 @@ private fun mainLoop(
         }
     }
 
-    scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
+    Main.scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
         try {
             log.debug("Getting all data from $client")
             val allData: RenogyData = client.getAllData(systemInfo)
@@ -70,6 +74,6 @@ private fun mainLoop(
     log.info("Press ENTER to end the program")
     System.`in`.read()
     log.info("Terminating")
-    scheduler.shutdown()
-    scheduler.awaitTermination(10, TimeUnit.SECONDS)
+    Main.scheduler.shutdown()
+    Main.scheduler.awaitTermination(10, TimeUnit.SECONDS)
 }

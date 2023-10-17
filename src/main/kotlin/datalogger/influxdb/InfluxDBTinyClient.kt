@@ -3,10 +3,14 @@ package datalogger.influxdb
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import utils.Log
+import java.net.ConnectException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * @property url the InfluxDB2 URL, e.g. `http://localhost:8086`
@@ -36,6 +40,31 @@ class InfluxDBTinyClient(
             val failure = InfluxDBFailure.parse(response)
             throw InfluxDBException(content, failure)
         }
+    }
+
+    private fun retryAsync(times: Int = 5, backoff: Duration = 15.seconds, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            if (e.shouldRetry && times > 0) {
+                log.warn("Failure occurred, retrying: $e")
+                Main.scheduler.schedule({
+                    try {
+                        retryAsync(times - 1, backoff, block)
+                    } catch (e: Exception) {
+                        log.error("Failed to retry block", e)
+                    }
+                }, backoff.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private val Exception.shouldRetry: Boolean get() = when {
+        this is ConnectException -> true
+        this is InfluxDBException && failure.httpErrorCode == 500 && failure.error.code == "internal error" && failure.error.message.contains("timeout") -> true
+        else -> false
     }
 
     /**
@@ -71,8 +100,10 @@ class InfluxDBTinyClient(
 
         val line = "\n$measurement $fields ${System.currentTimeMillis() * 1_000_000}\n"
 
-        buildRequest(writeUri, "text/plain; charset=utf-8")
-            .execPost(line)
+        val req = buildRequest(writeUri, "text/plain; charset=utf-8")
+        retryAsync {
+            req.execPost(line)
+        }
     }
 
     companion object {
