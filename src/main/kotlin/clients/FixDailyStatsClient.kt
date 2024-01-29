@@ -33,9 +33,10 @@ class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate
         val today = LocalDate.now()
         val crossedMidnight = lastDataSampledAt != today
         if (crossedMidnight) {
+            val ldsa = lastDataSampledAt
             lastDataSampledAt = today
             dailyStatsCalculator = DailyStatsStrategy.DontTrustRenogyPeriod(allData)
-            log.info("Midnight: activating $dailyStatsCalculator")
+            log.info("Midnight (last data sampled: $ldsa, now it's $today): activating $dailyStatsCalculator")
         }
 
         // detect whether Renogy finally performed the daily value reset.
