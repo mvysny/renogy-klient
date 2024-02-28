@@ -39,12 +39,12 @@ dependencies {
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
-    testImplementation("org.testcontainers:postgresql:1.19.4")
+    testImplementation("org.testcontainers:postgresql:1.19.6")
     testImplementation("com.github.mvysny.vokorm:vok-orm:3.1")
-    testImplementation("org.testcontainers:influxdb:1.19.4")
+    testImplementation("org.testcontainers:influxdb:1.19.6")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
-    testImplementation("com.influxdb:influxdb-client-kotlin:6.10.0")
+    testImplementation("com.influxdb:influxdb-client-kotlin:6.11.0")
 }
 
 tasks.withType<Test> {
