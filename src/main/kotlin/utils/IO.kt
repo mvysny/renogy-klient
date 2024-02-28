@@ -64,15 +64,24 @@ class SerialPortIO(val devName: File) : IO {
     private val serialPort = SerialPort.getCommPort(devName.absolutePath)
 
     fun configure() {
-        if(!serialPort.openPort()) throw IOException("Failed to open $devName")
-        if(!serialPort.setComPortParameters(9600, 8, 0, SerialPort.NO_PARITY)) throw IOException("Failed to set com port params")
+        check(serialPort.openPort()) { "Failed to open" }
+        check(serialPort.setComPortParameters(9600, 8, 0, SerialPort.NO_PARITY)) { "Failed to set com port params" }
         // sets off CTS, RTS, XON and XOFF
-        if(!serialPort.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED)) throw IOException("Failed to disable flow control")
+        check(serialPort.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED)) { "Failed to disable flow control" }
     }
 
     private fun configureTimeout(timeout: Duration) {
         require(!timeout.isNegative()) { "timeout: $timeout must not be negative" }
-        serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING or SerialPort.TIMEOUT_WRITE_BLOCKING, timeout.inWholeMilliseconds.toInt(), timeout.inWholeMilliseconds.toInt())
+        val millis = timeout.inWholeMilliseconds.toInt()
+        check(serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_BLOCKING or SerialPort.TIMEOUT_WRITE_BLOCKING, millis, millis)) {
+            "Failed to set timeouts to $millis ms"
+        }
+    }
+
+    private fun check(outcome: Boolean, errorMessageProvider: () -> String) {
+        if (!outcome) {
+            throw IOException("${serialPort}: ${errorMessageProvider()}")
+        }
     }
 
     override fun read(bytes: Int, timeout: Duration): ByteArray {
@@ -81,7 +90,8 @@ class SerialPortIO(val devName: File) : IO {
 
         configureTimeout(timeout)
         val buf = ByteArray(bytes)
-        val bytesRead = serialPort.readBytes(buf, bytes.toLong())
+        val bytesRead = serialPort.readBytes(buf, bytes)
+        check(bytesRead >= 0) { "readBytes() failed" }
         check(bytesRead in 0..bytes) { "Expected ${0..bytes} but got $bytesRead" }
         if (bytesRead < bytes) {
             throw IOTimeoutException("Timeout reading data; expected to read $bytes bytes but read $bytesRead bytes")
@@ -91,7 +101,8 @@ class SerialPortIO(val devName: File) : IO {
 
     override fun write(bytes: ByteArray, timeout: Duration) {
         configureTimeout(timeout)
-        val bytesWritten = serialPort.writeBytes(bytes, bytes.size.toLong())
+        val bytesWritten = serialPort.writeBytes(bytes, bytes.size)
+        check(bytesWritten >= 0) { "writeBytes() failed" }
         check(bytesWritten in 0..bytes.size) { "Expected ${0..bytes.size} but got $bytesWritten" }
         if (bytesWritten < bytes.size) {
             throw IOTimeoutException("Timeout writing data; expected to write ${bytes.size} bytes but wrote $bytesWritten bytes")
@@ -99,7 +110,7 @@ class SerialPortIO(val devName: File) : IO {
     }
 
     override fun close() {
-        if (!serialPort.closePort()) throw IOException("Failed to close $devName")
+        check(serialPort.closePort()) { "Failed to close" }
     }
 
     override fun toString(): String = "SerialPortIO($devName)"

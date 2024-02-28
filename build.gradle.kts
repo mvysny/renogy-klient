@@ -26,8 +26,8 @@ java {
 dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.2")
     implementation("info.picocli:picocli:4.7.5")
-    implementation("com.fazecast:jSerialComm:2.9.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("com.fazecast:jSerialComm:2.10.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
     // logging
     implementation("org.slf4j:slf4j-simple:2.0.12")
