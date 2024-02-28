@@ -30,19 +30,18 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
     // logging
-    implementation("org.slf4j:slf4j-simple:2.0.9")
+    implementation("org.slf4j:slf4j-simple:2.0.12")
 
     // PostgreSQL support
-    implementation("org.postgresql:postgresql:42.5.4")
+    implementation("org.postgresql:postgresql:42.7.2")
     // connection pooling & liveness testing
-    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("com.zaxxer:HikariCP:5.1.0")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
-    testImplementation("org.testcontainers:postgresql:1.18.0")
+    testImplementation("org.testcontainers:postgresql:1.19.4")
     testImplementation("com.github.mvysny.vokorm:vok-orm:2.0")
-    testImplementation("com.zaxxer:HikariCP:5.0.1")
-    testImplementation("org.testcontainers:influxdb:1.18.0")
+    testImplementation("org.testcontainers:influxdb:1.19.4")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
     testImplementation("com.influxdb:influxdb-client-kotlin:6.10.0")
