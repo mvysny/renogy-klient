@@ -78,12 +78,12 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
      */
     override fun getSystemInfo(): SystemInfo {
         log.debug("getting system info")
-        var result = readRegister(0x0A, 4)
-        val maxVoltage = result[0].toInt()
-        val ratedChargingCurrent = result[1].toInt()
-        val ratedDischargingCurrent = result[2].toInt()
-        val productTypeNum = result[3]
-        val productType = ProductType.values().firstOrNull { it.modbusValue == productTypeNum }
+        var result: ByteArray = readRegister(0x0A, 4)
+        val maxVoltage: Int = result[0].toInt()
+        val ratedChargingCurrent: Int = result[1].toInt()
+        val ratedDischargingCurrent: Int = result[2].toInt()
+        val productTypeNum: Byte = result[3]
+        val productType: ProductType? = ProductType.entries.firstOrNull { it.modbusValue == productTypeNum }
 
         result = readRegister(0x0C, 16)
         val productModel = result.toAsciiString().trim()
@@ -194,7 +194,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
     override fun close() {}
 
     companion object {
-        private val COMMAND_READ_REGISTER: Byte = 0x03
+        private const val COMMAND_READ_REGISTER: Byte = 0x03
         private val log = Log<RenogyModbusClient>()
     }
 }
