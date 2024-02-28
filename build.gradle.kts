@@ -40,7 +40,7 @@ dependencies {
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.24")
     testImplementation("org.testcontainers:postgresql:1.19.4")
-    testImplementation("com.github.mvysny.vokorm:vok-orm:2.0")
+    testImplementation("com.github.mvysny.vokorm:vok-orm:3.1")
     testImplementation("org.testcontainers:influxdb:1.19.4")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
