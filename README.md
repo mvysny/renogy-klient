@@ -47,10 +47,10 @@ Options:
 
 Read below on how to compile the project from sources.
 
-This program requires Java JRE 17+ to run:
+This program requires Java JRE 17+ to run, but it's a good idea to use the newest openjdk:
 
 ```
-$ sudo apt install openjdk-20-jre-headless
+$ sudo apt install openjdk-21-jre-headless
 ```
 
 # Running
