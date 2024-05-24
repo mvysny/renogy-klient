@@ -14,26 +14,26 @@ repositories {
 
 dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.2")
-    implementation("info.picocli:picocli:4.7.5")
-    implementation("com.fazecast:jSerialComm:2.10.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("info.picocli:picocli:4.7.6")
+    implementation("com.fazecast:jSerialComm:2.10.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // logging
-    implementation("org.slf4j:slf4j-simple:2.0.12")
+    implementation("org.slf4j:slf4j-simple:2.0.13")
 
     // PostgreSQL support
-    implementation("org.postgresql:postgresql:42.7.2")
+    implementation("org.postgresql:postgresql:42.7.3")
     // connection pooling & liveness testing
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     // tests
     testImplementation("com.github.mvysny.dynatest:dynatest:0.25")
-    testImplementation("org.testcontainers:postgresql:1.19.6")
+    testImplementation("org.testcontainers:postgresql:1.19.8")
     testImplementation("com.github.mvysny.vokorm:vok-orm:3.1")
-    testImplementation("org.testcontainers:influxdb:1.19.6")
+    testImplementation("org.testcontainers:influxdb:1.19.8")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
-    testImplementation("com.influxdb:influxdb-client-kotlin:6.11.0")
+    testImplementation("com.influxdb:influxdb-client-kotlin:7.1.0")
 }
 
 tasks.withType<Test> {
