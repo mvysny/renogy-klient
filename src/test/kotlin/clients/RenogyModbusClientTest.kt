@@ -1,6 +1,6 @@
 package clients
 
-import com.github.mvysny.dynatest.DynaTest
+import org.junit.jupiter.api.Test
 import utils.Buffer
 import utils.addAll
 import utils.toHex
@@ -8,8 +8,8 @@ import kotlin.test.expect
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
 
-class RenogyModbusClientTest : DynaTest({
-    test("readRegister000ANormalResponse") {
+class RenogyModbusClientTest {
+    @Test fun readRegister000ANormalResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("010302181e324c")
         val client = RenogyModbusClient(buffer, 1.seconds)
@@ -18,7 +18,7 @@ class RenogyModbusClientTest : DynaTest({
         expect("181e") { response.toHex() }
     }
 
-    test("readRegister000AErrorResponse") {
+    @Test fun readRegister000AErrorResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("018302c0f1")
         val client = RenogyModbusClient(buffer, 1.seconds)
@@ -34,7 +34,7 @@ class RenogyModbusClientTest : DynaTest({
         buffer.expectWrittenBytes("0103000a0001a408")
     }
 
-    test("readRegister000CNormalResponse") {
+    @Test fun readRegister000CNormalResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("010310202020204d5434383330202020202020ee98")
         val client = RenogyModbusClient(buffer, 1.seconds)
@@ -43,7 +43,7 @@ class RenogyModbusClientTest : DynaTest({
         expect("202020204d5434383330202020202020") { response.toHex() }
     }
 
-    test("ReadDailyStats") {
+    @Test fun ReadDailyStats() {
         val buffer = Buffer()
         // The 4th and 5th bytes 0070H indicate the current day's min. battery voltage: 0070H * 0.1 = 112 * 0.1 = 11.2V
         // The 6th and 7th bytes 0084H indicate the current day's max. battery voltage: 0084H * 0.1 = 132 * 0.1 = 13.2V
@@ -61,4 +61,4 @@ class RenogyModbusClientTest : DynaTest({
             DailyStats(11.2f, 13.2f, 2.16f, 0f, 10u, 0u, 1544u, 2064u, 112u, 132u)
         ) { dailyStats }
     }
-})
+}

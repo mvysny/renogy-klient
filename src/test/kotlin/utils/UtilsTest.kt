@@ -1,10 +1,10 @@
 package utils
 
-import com.github.mvysny.dynatest.DynaTest
+import kotlin.test.Test
 import kotlin.test.expect
 
-class UtilsTest : DynaTest({
-    test("toHex()") {
+class UtilsTest {
+    @Test fun testToHex() {
         expect("00") { 0.toByte().toHex() }
         expect("ff") { 0xFF.toByte().toHex() }
         expect("0f") { 0x0F.toByte().toHex() }
@@ -14,16 +14,16 @@ class UtilsTest : DynaTest({
         }
     }
 
-    test("fromHex()") {
+    @Test fun testFromHex() {
         expect("01031a0070008400d80000000a0000060808") {
             "01031a0070008400d80000000a0000060808".fromHex().toHex()
         }
     }
 
-    test("toAsciiString()") {
+    @Test fun testToAsciiString() {
         expect("    MT4830      ") {
             byteArrayOf(0x20, 0x20, 0x20, 0x20, 0x4D, 0x54, 0x34, 0x38, 0x33, 0x30, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20).toAsciiString()
         }
         expect("") { byteArrayOf().toAsciiString() }
     }
-})
+}

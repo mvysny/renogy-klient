@@ -1,13 +1,13 @@
 package clients
 
-import com.github.mvysny.dynatest.DynaTest
+import org.junit.jupiter.api.Test
 
-class DummyRenogyClientTest : DynaTest({
-    test("smoke") {
+class DummyRenogyClientTest {
+    @Test fun smoke() {
         val client = DummyRenogyClient()
         client.getAllData()
         client.getAllData()
         Thread.sleep(10)
         client.getAllData()
     }
-})
+}
