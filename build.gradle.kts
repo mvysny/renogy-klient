@@ -59,10 +59,6 @@ tasks.withType<KotlinCompile> {
     }
 }
 
-tasks.compileJava {
-    options.javaModuleVersion = provider { version as String }
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
