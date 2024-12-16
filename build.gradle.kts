@@ -1,8 +1,8 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
-    kotlin("jvm") version "2.0.20"
-    kotlin("plugin.serialization") version "2.0.20"
+    kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
     application
 }
 
@@ -16,7 +16,7 @@ dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.2")
     implementation("info.picocli:picocli:4.7.6")
     implementation("com.fazecast:jSerialComm:2.10.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // logging
     implementation("org.slf4j:slf4j-simple:2.0.13")
@@ -30,9 +30,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.0")
     testImplementation(kotlin("test"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.testcontainers:postgresql:1.19.8")
+    testImplementation("org.testcontainers:postgresql:1.20.4")
     testImplementation("com.github.mvysny.vokorm:vok-orm:3.1")
-    testImplementation("org.testcontainers:influxdb:1.19.8")
+    testImplementation("org.testcontainers:influxdb:1.20.4")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
     testImplementation("com.influxdb:influxdb-client-kotlin:7.1.0")
