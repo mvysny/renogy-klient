@@ -1,4 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -49,4 +51,19 @@ tasks.withType<Test> {
 application {
     mainClass.set("MainKt")
     applicationDefaultJvmArgs = listOf("-Xmx20m", "-Xss200k", "-client")
+}
+
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+tasks.compileJava {
+    options.javaModuleVersion = provider { version as String }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
