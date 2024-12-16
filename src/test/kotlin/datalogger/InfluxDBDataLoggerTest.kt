@@ -36,8 +36,8 @@ class InfluxDBDataLoggerTests {
         }
 
         @AfterAll @JvmStatic fun stopInflux() {
-            client.close()
-            container.stop()
+            if (this::client.isInitialized) client.close()
+            if (this::container.isInitialized) container.stop()
         }
     }
 

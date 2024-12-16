@@ -27,7 +27,7 @@ class PostgresDataLoggerTests {
             container = PostgreSQLContainer("postgres:15.3")
             container.start()
             val cfg = HikariConfig().apply {
-                jdbcUrl = container.getJdbcUrl()
+                jdbcUrl = container.jdbcUrl
                 username = container.username
                 password = container.password
             }
@@ -35,7 +35,7 @@ class PostgresDataLoggerTests {
         }
         @AfterAll @JvmStatic fun stopPostgress() {
             JdbiOrm.destroy()
-            container.stop()
+            if (this::container.isInitialized) container.stop()
         }
         private var firstTest = true
     }
