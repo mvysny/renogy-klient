@@ -4,9 +4,7 @@ import utils.Log
 import utils.scheduleAtFixedRate
 import utils.scheduleAtTimeOfDay
 import java.time.LocalTime
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -63,15 +61,22 @@ private fun mainLoop(
     }
 
     val dataGrabLock: Lock = ReentrantLock()
+    val pendingFutures = CopyOnWriteArrayList<Future<*>>()
     Main.scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
         try {
+            pendingFutures.removeIf { it.isDone }
+            if (pendingFutures.isNotEmpty()) {
+                log.warn("${pendingFutures.size} pending logger requests ongoing")
+            }
             log.debug("Getting all data from $client")
-            val allData: RenogyData = dataGrabLock.withLock { client.getAllData(systemInfo) }
+            val allData: RenogyData = dataGrabLock.withLock {
+                client.getAllData(systemInfo)
+            }
             log.debug("Writing data to ${args.stateFile}")
             args.stateFile.writeText(allData.toJson())
             // log data asynchronously - if there's a timeout or such, just repeat it a couple of times but don't
             // delay the data sampling.
-            Main.scheduler.submit {
+            val logFuture = Main.scheduler.submit {
                 try {
                     log.debug("Logging data to data loggers")
                     dataLogger.append(allData)
@@ -80,6 +85,7 @@ private fun mainLoop(
                     log.error("Failed to $dataLogger", t)
                 }
             }
+            pendingFutures += logFuture
             log.debug("Main loop: done")
         } catch (e: Exception) {
             // don't crash on exception; print it out and continue. The KeepOpenClient will recover for serialport errors.
