@@ -4,6 +4,9 @@ import clients.RenogyException.Companion.fromCode
 import kotlinx.serialization.Serializable
 import java.io.Closeable
 
+/**
+ * Not thread-safe.
+ */
 interface RenogyClient : Closeable {
     /**
      * Retrieves the [SystemInfo] from the device.

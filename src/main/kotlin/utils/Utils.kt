@@ -62,3 +62,14 @@ fun ScheduledExecutorService.scheduleAtTimeOfDay(timeOfDay: LocalTime, command: 
 
 fun ScheduledExecutorService.scheduleAtFixedRate(rate: Duration, command: () -> Unit): ScheduledFuture<*> =
     scheduleAtFixedRate(command, 0L, rate.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+
+/**
+ * Returns the root cause of this exception - goes through the [Throwable.cause] chain until the last one.
+ */
+val Throwable.rootCause: Throwable get() {
+    var self = this
+    while(true) {
+        val cause = self.cause ?: return self
+        self = cause
+    }
+}

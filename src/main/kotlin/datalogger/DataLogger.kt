@@ -6,7 +6,7 @@ import utils.closeQuietly
 import java.io.Closeable
 
 /**
- * Logs [RenogyData] somewhere.
+ * Logs [RenogyData] somewhere. All operations are blocking. Not thread safe.
  */
 interface DataLogger : Closeable {
     /**
@@ -15,12 +15,13 @@ interface DataLogger : Closeable {
     fun init()
 
     /**
-     * Appends [data] to the logger.
+     * Appends [data] to the logger. Blocks until the appending is done and finished. The function should automatically retry 5 times
+     * on recoverable errors, such as connection resets, timeouts and such.
      */
     fun append(data: RenogyData)
 
     /**
-     * Deletes all records older than given number of [days].
+     * Deletes all records older than given number of [days]. Blocks until the appending is done and finished.
      */
     fun deleteRecordsOlderThan(days: Int = 365)
 }

@@ -7,6 +7,9 @@ import java.time.LocalTime
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.seconds
 
 fun main(_args: Array<String>) {
@@ -48,6 +51,8 @@ private fun mainLoop(
     dataLogger.init()
     dataLogger.deleteRecordsOlderThan(args.pruneLog)
 
+    // don't use Executors.newSingleThreadScheduledExecutor() - if InfluxDBTinyClient blocks on a TCP-IP or such,
+    // don't prevent the main loop from being executed.
     Main.scheduler = Executors.newSingleThreadScheduledExecutor()
     Main.scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
         try {
@@ -57,13 +62,22 @@ private fun mainLoop(
         }
     }
 
+    val dataGrabLock: Lock = ReentrantLock()
     Main.scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
         try {
             log.debug("Getting all data from $client")
-            val allData: RenogyData = client.getAllData(systemInfo)
+            val allData: RenogyData = dataGrabLock.withLock { client.getAllData(systemInfo) }
             log.debug("Writing data to ${args.stateFile}")
             args.stateFile.writeText(allData.toJson())
-            dataLogger.append(allData)
+            // log data asynchronously - if there's a timeout or such, just repeat it a couple of times but don't
+            // delay the data sampling.
+            Main.scheduler.submit {
+                try {
+                    dataLogger.append(allData)
+                } catch (t: Throwable) {
+                    log.error("Failed to $dataLogger", t)
+                }
+            }
             log.debug("Main loop: done")
         } catch (e: Exception) {
             // don't crash on exception; print it out and continue. The KeepOpenClient will recover for serialport errors.
