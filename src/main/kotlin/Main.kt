@@ -73,7 +73,9 @@ private fun mainLoop(
             // delay the data sampling.
             Main.scheduler.submit {
                 try {
+                    log.debug("Logging data to data loggers")
                     dataLogger.append(allData)
+                    log.debug("Data logged")
                 } catch (t: Throwable) {
                     log.error("Failed to $dataLogger", t)
                 }
