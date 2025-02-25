@@ -61,19 +61,24 @@ private fun mainLoop(
     }
 
     val dataGrabLock: Lock = ReentrantLock()
+    // will keep track of all pending dataLogger requests
     val pendingFutures = CopyOnWriteArrayList<Future<*>>()
     Main.scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
         try {
+            // cleanup all finished dataLogger requests; warn if there are some still ongoing
             pendingFutures.removeIf { it.isDone }
             if (pendingFutures.isNotEmpty()) {
                 log.warn("${pendingFutures.size} pending logger requests ongoing")
             }
+
+            // get the data from the Renogy device
             log.debug("Getting all data from $client")
             val allData: RenogyData = dataGrabLock.withLock {
                 client.getAllData(systemInfo)
             }
             log.debug("Writing data to ${args.stateFile}")
             args.stateFile.writeText(allData.toJson())
+
             // log data asynchronously - if there's a timeout or such, just repeat it a couple of times but don't
             // delay the data sampling.
             val logFuture = Main.scheduler.submit {
