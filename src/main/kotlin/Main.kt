@@ -53,7 +53,7 @@ private fun mainLoop(
 
     // don't use Executors.newSingleThreadScheduledExecutor() - if InfluxDBTinyClient blocks on a TCP-IP or such,
     // don't prevent the main loop from being executed.
-    Main.scheduler = Executors.newSingleThreadScheduledExecutor()
+    Main.scheduler = Executors.newScheduledThreadPool(1)
     Main.scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
         try {
             dataLogger.deleteRecordsOlderThan(args.pruneLog)
@@ -89,7 +89,10 @@ private fun mainLoop(
 
     log.info("Press ENTER to end the program")
     System.`in`.read()
-    log.info("Terminating")
+    log.info("Terminating with the timeout of 10 seconds")
     Main.scheduler.shutdown()
     Main.scheduler.awaitTermination(10, TimeUnit.SECONDS)
+    log.info("Killing all unresponsive threads")
+    Main.scheduler.shutdownNow()
+    log.debug("Done")
 }

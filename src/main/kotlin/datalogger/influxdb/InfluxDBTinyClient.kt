@@ -8,6 +8,7 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.URI
 import java.net.http.HttpClient
+import java.net.http.HttpConnectTimeoutException
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import kotlin.time.Duration
@@ -25,7 +26,9 @@ class InfluxDBTinyClient(
     private val writeUri =
         URI("$url/api/v2/write?org=$org&bucket=$bucket&precision=ns")
     private val deleteUri = URI("$url/api/v2/delete?org=$org&bucket=$bucket")
-    private val client: HttpClient = HttpClient.newHttpClient()
+    private val client: HttpClient = HttpClient.newBuilder()
+        .connectTimeout(java.time.Duration.ofSeconds(15))
+        .build()
 
     override fun toString(): String =
         "InfluxDBClient(url='$url', org='$org', bucket='$bucket')"
@@ -66,6 +69,7 @@ class InfluxDBTinyClient(
         this is ConnectException -> true
         this is InfluxDBException && failure.httpErrorCode == 500 && failure.error.code == "internal error" && failure.error.message.contains("timeout") -> true
         this.rootCause.isConnectionReset -> true
+        this is HttpConnectTimeoutException -> true
         else -> false
     }
     private val Throwable.isConnectionReset: Boolean get() = this is SocketException && message == "Connection reset"
