@@ -114,7 +114,7 @@ class RetryableDataLogger(
 
     override fun deleteRecordsOlderThan(days: Int) {
         retry {
-            deleteRecordsOlderThan(days)
+            delegate.deleteRecordsOlderThan(days)
         }
     }
 
