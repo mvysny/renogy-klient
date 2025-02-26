@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 import org.testcontainers.DockerClientFactory
 import java.time.Instant
 
-class InfluxDBDataLoggerTests {
+class InfluxDBDataLoggerTest {
     companion object {
         private val token = "tgPiZMSv30US40AX_v9zV-dTexHeJ1u4zNCQYEGNW13DNbLiCUFxpVLPZZtX7C0f8UfN84oS3jRxaKWlAICKmA=="
         private lateinit var container: InfluxDBContainer<*>

@@ -19,7 +19,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Instant
 import kotlin.test.expect
 
-class PostgresRetryableDataLoggerTests {
+class PostgresDataLoggerTest {
     companion object {
         private lateinit var container: PostgreSQLContainer<*>
         @BeforeAll @JvmStatic fun startPostgres() {
