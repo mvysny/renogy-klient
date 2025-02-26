@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.testcontainers.DockerClientFactory
+import java.time.Instant
 
 class InfluxDBDataLoggerTests {
     companion object {
@@ -48,7 +49,7 @@ class InfluxDBDataLoggerTests {
     @Test fun smoke() {
         InfluxDB2Logger(InfluxDBTinyClient(container.url, container.organization, container.bucket, token)).use {
             it.init()
-            it.append(dummyRenogyData)
+            it.append(dummyRenogyData, Instant.now())
             val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
             expect(1) { result.size }
             expect(100L) { result[0].records[0].value }
@@ -58,9 +59,9 @@ class InfluxDBDataLoggerTests {
     @Test fun upsert() {
         InfluxDB2Logger(InfluxDBTinyClient(container.url, container.organization, container.bucket, token)).use {
             it.init()
-            it.append(dummyRenogyData)
-            it.append(dummyRenogyData)
-            it.append(dummyRenogyData)
+            it.append(dummyRenogyData, Instant.now())
+            it.append(dummyRenogyData, Instant.now())
+            it.append(dummyRenogyData, Instant.now())
             val result: MutableList<FluxTable> = client.queryApi.query(fluxQuery)
             expect(true) { result.size in 1..3 }
             expect(100L) { result[0].records[0].value }

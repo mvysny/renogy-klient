@@ -5,6 +5,7 @@ import java.net.SocketException
 import java.time.Instant
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -63,6 +64,8 @@ fun ScheduledExecutorService.scheduleAtTimeOfDay(timeOfDay: LocalTime, command: 
 
 fun ScheduledExecutorService.scheduleAtFixedRate(rate: Duration, command: () -> Unit): ScheduledFuture<*> =
     scheduleAtFixedRate(command, 0L, rate.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+
+fun <T> Future<T>.get(timeout: Duration): T? = get(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
 /**
  * Returns the root cause of this exception - goes through the [Throwable.cause] chain until the last one.

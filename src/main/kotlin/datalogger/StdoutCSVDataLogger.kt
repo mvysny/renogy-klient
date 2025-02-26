@@ -3,6 +3,7 @@ package datalogger
 import clients.RenogyData
 import utils.CSVWriter
 import java.io.PrintStream
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -16,7 +17,7 @@ class StdoutCSVDataLogger(val utc: Boolean) : DataLogger {
         csv.writeHeader()
     }
 
-    override fun append(data: RenogyData) {
+    override fun append(data: RenogyData, sampledAt: Instant) {
         csv.writeData(data, utc)
     }
 

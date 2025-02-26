@@ -74,13 +74,13 @@ data class Args(
                 result.dataLoggers.add(CSVDataLogger(csv!!, utc))
             }
             if (postgres != null) {
-                result.dataLoggers.add(PostgresDataLogger(postgres!!, postgresUsername, postgresPassword))
+                result.dataLoggers.add(PostgresDataLogger(postgres!!, postgresUsername, postgresPassword).timeoutAndRetry())
             }
             if (influx != null) {
                 requireNotNull(influxOrg) { "influxorg must be specified" }
                 requireNotNull(influxBucket) { "influxbucket must be specified" }
                 requireNotNull(influxToken) { "influxtoken must be specified" }
-                result.dataLoggers.add(InfluxDB2Logger(InfluxDBTinyClient(influx!!, influxOrg!!, influxBucket!!, influxToken!!)))
+                result.dataLoggers.add(InfluxDB2Logger(InfluxDBTinyClient(influx!!, influxOrg!!, influxBucket!!, influxToken!!)).timeoutAndRetry())
             }
             if (result.dataLoggers.isEmpty()) {
                 result.dataLoggers.add(StdoutCSVDataLogger(utc))
@@ -112,6 +112,9 @@ data class Args(
             log.debug(args.toString())
             return args
         }
+
+        private fun DataLogger.timeoutAndRetry(): DataLogger =
+            RetryableDataLogger(TimeoutDataLogger(this))
     }
 }
 

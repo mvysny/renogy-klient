@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Instant
 import kotlin.test.expect
 
 class PostgresDataLoggerTests {
@@ -47,7 +48,7 @@ class PostgresDataLoggerTests {
     @Test fun smoke() {
         PostgresDataLogger(container.jdbcUrl, container.username, container.password).use {
             it.init()
-            it.append(dummyRenogyData)
+            it.append(dummyRenogyData, Instant.now())
             val logs = PostgresDataLog.findAll()
             expect(1) { logs.size }
             expect(100) { logs[0].batterySOC }
@@ -59,9 +60,9 @@ class PostgresDataLoggerTests {
     @Test fun upsert() {
         PostgresDataLogger(container.jdbcUrl, container.username, container.password).use {
             it.init()
-            it.append(dummyRenogyData)
-            it.append(dummyRenogyData)
-            it.append(dummyRenogyData)
+            it.append(dummyRenogyData, Instant.now())
+            it.append(dummyRenogyData, Instant.now())
+            it.append(dummyRenogyData, Instant.now())
             val logs = PostgresDataLog.findAll()
             expect(true) { logs.size in 1..3 }
             expect(100) { logs[0].batterySOC }

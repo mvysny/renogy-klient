@@ -51,11 +51,9 @@ private fun mainLoop(
     val scheduler = Executors.newSingleThreadScheduledExecutor()
     Main.backgroundTasks = BackgroundTaskExecutor()
     scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
-        try {
+        Main.backgroundTasks.submit("Prune old records", 45.seconds) {
             log.info("Pruning old records")
             dataLogger.deleteRecordsOlderThan(args.pruneLog)
-        } catch (e: Throwable) {
-            log.error("Failed to prune old records", e)
         }
     }
 
@@ -75,14 +73,10 @@ private fun mainLoop(
 
             // log data asynchronously - if there's a timeout or such, just repeat it a couple of times but don't
             // delay the data sampling.
-            scheduler.submit {
-                try {
-                    log.debug("Logging data to data loggers")
-                    dataLogger.append(allData, sampledAt)
-                    log.debug("Data logged")
-                } catch (t: Throwable) {
-                    log.error("Failed to $dataLogger", t)
-                }
+            Main.backgroundTasks.submit("Log data", 60.seconds) {
+                log.debug("Logging data to data loggers")
+                dataLogger.append(allData, sampledAt)
+                log.debug("Data logged")
             }
             log.debug("Main loop: done")
         } catch (e: Exception) {

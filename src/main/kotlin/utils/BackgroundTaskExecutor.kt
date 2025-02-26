@@ -5,15 +5,24 @@ import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.*
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * A simple long-running task executor, may run multiple tasks at once.
  * Call [cleanup] periodically, to cancel old tasks.
- * @property cancelTaskAfter if a task didn't finish within this duration, it will be canceled in [cleanup].
  */
-class BackgroundTaskExecutor(val cancelTaskAfter: Duration = 15.seconds) : Closeable {
-    private data class Task(val name: String, val future: Future<*>, val submittedAt: Instant)
+class BackgroundTaskExecutor : Closeable {
+    private data class Task(val name: String, val future: Future<*>, val submittedAt: Instant, val cancelTaskAfter: Duration) {
+        val isHogged: Boolean get() = Instant.now() - submittedAt >= cancelTaskAfter
+        fun cancelIfHogged() {
+            if (isHogged) {
+                cancel()
+            }
+        }
+        fun cancel() {
+            future.cancel(true)
+        }
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
     private val pendingTasks = CopyOnWriteArrayList<Task>()
 
@@ -21,16 +30,39 @@ class BackgroundTaskExecutor(val cancelTaskAfter: Duration = 15.seconds) : Close
         executor.shutdownGracefully()
     }
 
-    fun submit(taskName: String, task: () -> Unit) {
-        val submittedAt = Instant.now()
-        val future = executor.submit {
+    /**
+     * @property cancelTaskAfter if a task didn't finish within this duration, it will be canceled in [cleanup].
+     */
+    fun submit(taskName: String, cancelTaskAfter: Duration, taskBody: () -> Unit) {
+        submitInternal(taskName, cancelTaskAfter) {
             try {
-                task()
+                taskBody()
             } catch (t: Throwable) {
                 log.error("Task '$taskName' failed to execute", t)
             }
         }
-        pendingTasks.add(Task(taskName, future, submittedAt))
+    }
+
+    private fun submitInternal(taskName: String, cancelTaskAfter: Duration, taskBody: () -> Unit): Task {
+        val submittedAt = Instant.now()
+        val future = executor.submit { taskBody() }
+        val t = Task(taskName, future, submittedAt, cancelTaskAfter)
+        pendingTasks.add(t)
+        return t
+    }
+
+    /**
+     * Runs given task, canceling it after [timeoutAfter]. Blocks until the task completes, is canceled by someone or times out.
+     * Throws [CancellationException] if it is canceled, [TimeoutException] if the wait times out.
+     */
+    fun run(taskName: String, timeoutAfter: Duration, taskBody: () -> Unit) {
+        val task = submitInternal(taskName, timeoutAfter, taskBody)
+        try {
+            task.future.get(timeoutAfter)
+        } catch (e: TimeoutException) {
+            task.cancel()
+            throw e
+        }
     }
 
     /**
@@ -42,11 +74,7 @@ class BackgroundTaskExecutor(val cancelTaskAfter: Duration = 15.seconds) : Close
         if (pendingTasks.isNotEmpty()) {
             log.warn("${pendingTasks.size} pending tasks ongoing")
         }
-        pendingTasks.forEach { task ->
-            if (Instant.now() - task.submittedAt >= cancelTaskAfter) {
-                task.future.cancel(true)
-            }
-        }
+        pendingTasks.forEach { task -> task.cancelIfHogged() }
     }
 
     companion object {

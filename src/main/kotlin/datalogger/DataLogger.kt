@@ -1,7 +1,6 @@
 package datalogger
 
 import clients.RenogyData
-import datalogger.influxdb.InfluxDBException
 import utils.Log
 import utils.closeQuietly
 import utils.isConnectionReset
@@ -10,6 +9,8 @@ import java.io.Closeable
 import java.net.ConnectException
 import java.net.http.HttpConnectTimeoutException
 import java.time.Instant
+import java.util.concurrent.CancellationException
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -37,7 +38,7 @@ interface DataLogger : Closeable {
      */
     fun isRecoverable(e: Throwable): Boolean = when {
         e is ConnectException -> true
-        e is InfluxDBException && e.failure.httpErrorCode == 500 && e.failure.error.code == "internal error" && e.failure.error.message.contains("timeout") -> true
+        e is TimeoutException -> true
         e.rootCause.isConnectionReset -> true
         this is HttpConnectTimeoutException -> true
         else -> false
@@ -83,7 +84,7 @@ class CompositeDataLogger : DataLogger {
 class RetryableDataLogger(
     val delegate: DataLogger,
     val times: Int = 5,
-    val backoff: Duration = 15.seconds
+    val backoff: Duration = 5.seconds
 ) : DataLogger by delegate {
 
     private fun retry(block: () -> Unit) {
@@ -120,4 +121,26 @@ class RetryableDataLogger(
     companion object {
         val log = Log<RetryableDataLogger>()
     }
+
+    override fun toString(): String = "RetryableDataLogger($delegate)"
+}
+
+class TimeoutDataLogger(
+    val delegate: DataLogger,
+    val timeoutAfter: Duration = 15.seconds
+) : DataLogger by delegate {
+    private val taskNameAppend = "Log to $delegate"
+    private val taskNamePrune = "Prune $delegate"
+
+    override fun append(data: RenogyData, sampledAt: Instant) {
+        Main.backgroundTasks.run(taskNameAppend, timeoutAfter) { delegate.append(data, sampledAt) }
+    }
+
+    override fun deleteRecordsOlderThan(days: Int) {
+        Main.backgroundTasks.run(taskNamePrune, timeoutAfter) { delegate.deleteRecordsOlderThan(days) }
+    }
+
+    override fun isRecoverable(e: Throwable): Boolean = super.isRecoverable(e) || e is CancellationException
+
+    override fun toString(): String = "TimeoutDataLogger($delegate)"
 }
