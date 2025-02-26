@@ -61,7 +61,7 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
                 "Faults text)")
     }
 
-    override fun append(data: RenogyData) {
+    override fun append(data: RenogyData, sampledAt: Instant) {
         val cols = mutableListOf<String>()
         val values = mutableListOf<String>()
 
@@ -77,7 +77,7 @@ class PostgresDataLogger(val url: String, val username: String?, val password: S
             }
         }
 
-        add("DateTime", Instant.now().epochSecond)
+        add("DateTime", sampledAt.epochSecond)
         add("BatterySOC", data.powerStatus.batterySOC)
         add("BatteryVoltage", data.powerStatus.batteryVoltage)
         add("ChargingCurrentToBattery", data.powerStatus.chargingCurrentToBattery)

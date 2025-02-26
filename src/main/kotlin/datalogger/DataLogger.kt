@@ -118,6 +118,6 @@ class RetryableDataLogger(
     }
 
     companion object {
-        val log = Log<RepeatingDataLogger>()
+        val log = Log<RetryableDataLogger>()
     }
 }

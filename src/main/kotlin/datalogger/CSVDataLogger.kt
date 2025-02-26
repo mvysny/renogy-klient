@@ -5,6 +5,7 @@ import utils.Log
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.time.Instant
 
 /**
  * Logs [RenogyData] to a CSV file.
@@ -24,7 +25,7 @@ class CSVDataLogger(val file: File, val utc: Boolean) : DataLogger {
         }
     }
 
-    override fun append(data: RenogyData) {
+    override fun append(data: RenogyData, sampledAt: Instant) {
         csv.writeData(data, utc)
     }
 
