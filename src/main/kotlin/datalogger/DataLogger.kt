@@ -135,14 +135,28 @@ class TimeoutDataLogger(
     private val taskNamePrune = "Prune $delegate"
 
     override fun append(data: RenogyData, sampledAt: Instant) {
-        Main.backgroundTasks.run(taskNameAppend, timeoutAfter) { delegate.append(data, sampledAt) }
+        log.debug("$taskNameAppend: request received")
+        Main.backgroundTasks.run(taskNameAppend, timeoutAfter) {
+            log.debug("$taskNameAppend: calling delegate")
+            delegate.append(data, sampledAt)
+            log.debug("$taskNameAppend: delegate success!")
+        }
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
-        Main.backgroundTasks.run(taskNamePrune, timeoutAfter) { delegate.deleteRecordsOlderThan(days) }
+        log.debug("$taskNamePrune: request received")
+        Main.backgroundTasks.run(taskNamePrune, timeoutAfter) {
+            log.debug("$taskNamePrune: calling delegate")
+            delegate.deleteRecordsOlderThan(days)
+            log.debug("$taskNamePrune: delegate success!")
+        }
     }
 
     override fun isRecoverable(e: Throwable): Boolean = super.isRecoverable(e) || e is CancellationException
 
     override fun toString(): String = "TimeoutDataLogger($delegate)"
+
+    companion object {
+        val log = Log<TimeoutDataLogger>()
+    }
 }

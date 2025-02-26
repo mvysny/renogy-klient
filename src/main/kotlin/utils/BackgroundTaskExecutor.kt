@@ -24,7 +24,11 @@ class BackgroundTaskExecutor : Closeable {
         }
     }
 
-    private val executor = Executors.newSingleThreadExecutor()
+    /**
+     * Don't use single thread executor, since main loop posts log request here, and individual log requests
+     * use TimeoutDataLogger which also posts requests here!!! If this would be single thread only, the sub-requests would never finish!
+     */
+    private val executor = Executors.newCachedThreadPool()
     private val pendingTasks = CopyOnWriteArrayList<Task>()
     private val idGenerator = AtomicInteger()
 
