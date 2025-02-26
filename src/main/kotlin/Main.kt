@@ -46,10 +46,12 @@ private fun mainLoop(
     log.info("Polling the solar controller every ${args.pollInterval} seconds; writing status to ${args.stateFile}, appending data to $dataLogger")
 
     dataLogger.init()
-    dataLogger.deleteRecordsOlderThan(args.pruneLog)
 
     val scheduler = Executors.newSingleThreadScheduledExecutor()
     Main.backgroundTasks = BackgroundTaskExecutor()
+
+    // prune records
+    dataLogger.deleteRecordsOlderThan(args.pruneLog)
     scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
         Main.backgroundTasks.submit("Prune old records", 45.seconds) {
             log.info("Pruning old records")
