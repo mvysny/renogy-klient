@@ -32,6 +32,10 @@ class BackgroundTaskExecutor : Closeable {
         executor.shutdownGracefully()
     }
 
+    fun kill() {
+        executor.shutdownNow()
+    }
+
     /**
      * @property cancelTaskAfter if a task didn't finish within this duration, it will be canceled in [cleanup].
      */
@@ -87,6 +91,6 @@ class BackgroundTaskExecutor : Closeable {
 
 fun ExecutorService.shutdownGracefully() {
     shutdown()
-    awaitTermination(10, TimeUnit.SECONDS)
+    awaitTermination(1, TimeUnit.SECONDS)
     shutdownNow()
 }

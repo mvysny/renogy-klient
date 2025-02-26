@@ -89,7 +89,7 @@ private fun mainLoop(
 
     log.info("Press ENTER to end the program")
     System.`in`.read()
-    log.info("Terminating with the timeout of 10 seconds")
+    log.info("Terminating with the timeout of 2 seconds")
     scheduler.shutdownGracefully()
     Main.backgroundTasks.closeQuietly()
     log.debug("Done")

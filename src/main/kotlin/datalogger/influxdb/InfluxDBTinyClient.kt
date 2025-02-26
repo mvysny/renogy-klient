@@ -39,6 +39,7 @@ class InfluxDBTinyClient(
             val failure = InfluxDBFailure.parse(response)
             throw InfluxDBException(content, failure)
         }
+        log.debug("POST ok!")
     }
 
     /**
@@ -55,10 +56,8 @@ class InfluxDBTinyClient(
      * @param request the delete request
      */
     fun delete(request: InfluxDBDeleteRequest) {
-        log.debug("POSTing $request")
         buildRequest(deleteUri, "application/json")
             .execPost(Json.encodeToString(request))
-        log.debug("Request posted successfully")
     }
 
     /**
@@ -81,9 +80,7 @@ class InfluxDBTinyClient(
         val line = "\n$measurement $fields ${sampledAt.toEpochMilli() * 1_000_000}\n"
 
         val req = buildRequest(writeUri, "text/plain; charset=utf-8")
-        log.debug("POSTing: $line")
         req.execPost(line)
-        log.debug("Data posted successfully")
     }
 
     companion object {
