@@ -86,8 +86,10 @@ class RetryableDataLogger(
     val times: Int = 5,
     val backoff: Duration = 5.seconds
 ) : DataLogger by delegate {
+    private val taskNameAppend = "Log to $delegate"
+    private val taskNamePrune = "Prune $delegate"
 
-    private fun retry(block: () -> Unit) {
+    private fun retry(taskName: String, block: () -> Unit) {
         var retries = times
         while(true) {
             try {
@@ -95,10 +97,10 @@ class RetryableDataLogger(
                 return // success
             } catch (e: Exception) {
                 if (retries > 0 && isRecoverable(e)) {
-                    log.warn("Failure occurred, retrying in $backoff", e)
+                    log.warn("$taskName failed, retrying in $backoff", e)
                     Thread.sleep(backoff.inWholeMilliseconds)
                     retries--
-                    log.info("Retrying")
+                    log.info("$taskName: retrying")
                 } else {
                     throw e
                 }
@@ -107,13 +109,13 @@ class RetryableDataLogger(
     }
 
     override fun append(data: RenogyData, sampledAt: Instant) {
-        retry {
+        retry(taskNameAppend) {
             delegate.append(data, sampledAt)
         }
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
-        retry {
+        retry(taskNamePrune) {
             delegate.deleteRecordsOlderThan(days)
         }
     }

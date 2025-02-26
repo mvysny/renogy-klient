@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 
 /**
@@ -11,7 +12,7 @@ import kotlin.time.Duration
  * Call [cleanup] periodically, to cancel old tasks.
  */
 class BackgroundTaskExecutor : Closeable {
-    private data class Task(val name: String, val future: Future<*>, val submittedAt: Instant, val cancelTaskAfter: Duration) {
+    private data class Task(val id: Int, val name: String, val future: Future<*>, val submittedAt: Instant, val cancelTaskAfter: Duration) {
         val isHogged: Boolean get() = Instant.now() - submittedAt >= cancelTaskAfter
         fun cancelIfHogged() {
             if (isHogged) {
@@ -25,6 +26,7 @@ class BackgroundTaskExecutor : Closeable {
 
     private val executor = Executors.newSingleThreadExecutor()
     private val pendingTasks = CopyOnWriteArrayList<Task>()
+    private val idGenerator = AtomicInteger()
 
     override fun close() {
         executor.shutdownGracefully()
@@ -46,7 +48,7 @@ class BackgroundTaskExecutor : Closeable {
     private fun submitInternal(taskName: String, cancelTaskAfter: Duration, taskBody: () -> Unit): Task {
         val submittedAt = Instant.now()
         val future = executor.submit { taskBody() }
-        val t = Task(taskName, future, submittedAt, cancelTaskAfter)
+        val t = Task(idGenerator.incrementAndGet(), taskName, future, submittedAt, cancelTaskAfter)
         pendingTasks.add(t)
         return t
     }
@@ -72,7 +74,7 @@ class BackgroundTaskExecutor : Closeable {
         // cleanup all finished tasks; warn if there are some still ongoing
         pendingTasks.removeIf { it.future.isDone }
         if (pendingTasks.isNotEmpty()) {
-            log.warn("${pendingTasks.size} pending tasks ongoing")
+            log.warn("${pendingTasks.size} hogged tasks: ${pendingTasks.map { "${it.id}:${it.name}" }}")
         }
         pendingTasks.forEach { task -> task.cancelIfHogged() }
     }
