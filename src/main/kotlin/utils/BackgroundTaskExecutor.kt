@@ -16,12 +16,20 @@ class BackgroundTaskExecutor : Closeable {
         val isHogged: Boolean get() = Instant.now() - submittedAt >= cancelTaskAfter
         fun cancelIfHogged() {
             if (isHogged) {
+                log.warn("Task '$this' is hogged, canceling")
                 cancel()
             }
         }
         fun cancel() {
             future.cancel(true)
         }
+
+        fun status() = when {
+            future.isCancelled -> "Cancelled"
+            future.isDone -> "Done"
+            else -> "Running for ${Instant.now() - submittedAt}"
+        }
+        override fun toString(): String = "$id:$name[submitted at $submittedAt, ${status()}]"
     }
 
     /**
@@ -48,7 +56,7 @@ class BackgroundTaskExecutor : Closeable {
             try {
                 taskBody()
             } catch (t: Throwable) {
-                log.error("Task '$taskName' failed to execute", t)
+                log.error("Task '$taskName' threw an exception", t)
             }
         }
     }
@@ -70,6 +78,7 @@ class BackgroundTaskExecutor : Closeable {
         try {
             task.future.get(timeoutAfter)
         } catch (e: TimeoutException) {
+            log.warn("The task '$task' failed to finish after $timeoutAfter, canceling")
             task.cancel()
             throw e
         }
