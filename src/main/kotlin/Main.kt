@@ -1,8 +1,7 @@
 import clients.*
 import datalogger.DataLogger
-import utils.Log
-import utils.scheduleAtFixedRate
-import utils.scheduleAtTimeOfDay
+import utils.*
+import java.time.Instant
 import java.time.LocalTime
 import java.util.concurrent.*
 import java.util.concurrent.locks.Lock
@@ -28,7 +27,7 @@ fun main(_args: Array<String>) {
 }
 
 object Main {
-    lateinit var scheduler: ScheduledExecutorService
+    lateinit var backgroundTasks: BackgroundTaskExecutor
 }
 
 /**
@@ -49,48 +48,42 @@ private fun mainLoop(
     dataLogger.init()
     dataLogger.deleteRecordsOlderThan(args.pruneLog)
 
-    // don't use Executors.newSingleThreadScheduledExecutor() - if InfluxDBTinyClient blocks on a TCP-IP or such,
-    // don't prevent the main loop from being executed.
-    Main.scheduler = Executors.newScheduledThreadPool(1)
-    Main.scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
+    val scheduler = Executors.newSingleThreadScheduledExecutor()
+    Main.backgroundTasks = BackgroundTaskExecutor()
+    scheduler.scheduleAtTimeOfDay(LocalTime.MIDNIGHT) {
         try {
+            log.info("Pruning old records")
             dataLogger.deleteRecordsOlderThan(args.pruneLog)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             log.error("Failed to prune old records", e)
         }
     }
 
     val dataGrabLock: Lock = ReentrantLock()
-    // will keep track of all pending dataLogger requests
-    val pendingFutures = CopyOnWriteArrayList<Future<*>>()
-    Main.scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
+    scheduler.scheduleAtFixedRate(args.pollInterval.seconds) {
         try {
-            // cleanup all finished dataLogger requests; warn if there are some still ongoing
-            pendingFutures.removeIf { it.isDone }
-            if (pendingFutures.isNotEmpty()) {
-                log.warn("${pendingFutures.size} pending logger requests ongoing")
-            }
+            Main.backgroundTasks.cleanup()
 
             // get the data from the Renogy device
             log.debug("Getting all data from $client")
             val allData: RenogyData = dataGrabLock.withLock {
                 client.getAllData(systemInfo)
             }
+            val sampledAt = Instant.now()
             log.debug("Writing data to ${args.stateFile}")
             args.stateFile.writeText(allData.toJson())
 
             // log data asynchronously - if there's a timeout or such, just repeat it a couple of times but don't
             // delay the data sampling.
-            val logFuture = Main.scheduler.submit {
+            scheduler.submit {
                 try {
                     log.debug("Logging data to data loggers")
-                    dataLogger.append(allData)
+                    dataLogger.append(allData, sampledAt)
                     log.debug("Data logged")
                 } catch (t: Throwable) {
                     log.error("Failed to $dataLogger", t)
                 }
             }
-            pendingFutures += logFuture
             log.debug("Main loop: done")
         } catch (e: Exception) {
             // don't crash on exception; print it out and continue. The KeepOpenClient will recover for serialport errors.
@@ -101,9 +94,7 @@ private fun mainLoop(
     log.info("Press ENTER to end the program")
     System.`in`.read()
     log.info("Terminating with the timeout of 10 seconds")
-    Main.scheduler.shutdown()
-    Main.scheduler.awaitTermination(10, TimeUnit.SECONDS)
-    log.info("Killing all unresponsive threads")
-    Main.scheduler.shutdownNow()
+    scheduler.shutdownGracefully()
+    Main.backgroundTasks.closeQuietly()
     log.debug("Done")
 }
