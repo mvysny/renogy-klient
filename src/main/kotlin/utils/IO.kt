@@ -1,6 +1,5 @@
 package utils
 
-import utils.Log
 import com.fazecast.jSerialComm.SerialPort
 import java.io.Closeable
 import java.io.File
