@@ -68,5 +68,6 @@ class InfluxDB2Logger(val client: InfluxDBTinyClient) : DataLogger {
     }
 
     override fun isRecoverable(e: Throwable): Boolean = super.isRecoverable(e) ||
-        e is InfluxDBException && e.isTimeout
+        e is InfluxDBException && e.isTimeout ||
+        e is InfluxDBException && e.failure.httpErrorCode == 502 // if InfluxDB2 runs behind nginx and is restarting, nginx responds with 502 Bad Gateway. Retry.
 }

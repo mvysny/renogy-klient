@@ -24,7 +24,7 @@ data class InfluxDBFailure(
             val err = try {
                 Json.decodeFromString<InfluxDBError>(json)
             } catch (e: SerializationException) {
-                log.debug("Failed to deserialize ${json}: $e", e)
+                log.debug("Failed to deserialize InfluxDB response as JSON, ignoring response: ${json}: $e", e)
                 InfluxDBError("unknown", json)
             }
             return InfluxDBFailure(statusCode, err)
