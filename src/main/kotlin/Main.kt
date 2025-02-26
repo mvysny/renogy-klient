@@ -47,7 +47,7 @@ private fun mainLoop(
 
     dataLogger.init()
 
-    val scheduler = Executors.newSingleThreadScheduledExecutor()
+    val scheduler = Executors.newSingleThreadScheduledExecutor(daemonThreadFactory("eventloop"))
     Main.backgroundTasks = BackgroundTaskExecutor()
 
     // prune records

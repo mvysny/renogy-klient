@@ -8,7 +8,9 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 import kotlin.random.nextUInt
 import kotlin.time.Duration
@@ -82,3 +84,13 @@ val Throwable.rootCause: Throwable get() {
  * Returns true if this exception is a TCP/IP "Connection reset" exception.
  */
 val Throwable.isConnectionReset: Boolean get() = this is SocketException && message == "Connection reset"
+
+fun daemonThreadFactory(executorName: String): ThreadFactory {
+    val threadId = AtomicInteger()
+    return ThreadFactory { r ->
+        val thread = Thread(r)
+        thread.name = "$executorName-${threadId.incrementAndGet()}"
+        thread.isDaemon = true
+        thread
+    }
+}
