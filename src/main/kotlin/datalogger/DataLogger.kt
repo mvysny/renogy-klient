@@ -80,7 +80,7 @@ class CompositeDataLogger : DataLogger {
  * If the [delegate] fails to append data or delete records, automatically retries
  * up to [times], with given [backoff] period.
  */
-class RepeatingDataLogger(
+class RetryableDataLogger(
     val delegate: DataLogger,
     val times: Int = 5,
     val backoff: Duration = 15.seconds
