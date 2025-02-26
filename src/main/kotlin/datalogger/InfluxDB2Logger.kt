@@ -3,22 +3,23 @@ package datalogger
 import clients.RenogyData
 import datalogger.influxdb.InfluxDBTinyClient
 import datalogger.influxdb.InfluxDBDeleteRequest
+import datalogger.influxdb.InfluxDBException
 import utils.Log
+import java.time.Instant
 import java.time.LocalDate
 
 /**
  * Logs data into an InfluxDB2 database.
  * @property client influxdb2 client
  */
-class InfluxDB2Logger(val client: InfluxDBTinyClient) :
-    DataLogger {
+class InfluxDB2Logger(val client: InfluxDBTinyClient) : DataLogger {
     private val measurement = "renogy"
 
     override fun init() {
         log.debug("Logging into $client")
     }
 
-    override fun append(data: RenogyData) {
+    override fun append(data: RenogyData, sampledAt: Instant) {
         val fields = buildMap<String, Any?> {
             put("BatterySOC", data.powerStatus.batterySOC)
             put("BatteryVoltage", data.powerStatus.batteryVoltage)
@@ -43,7 +44,7 @@ class InfluxDB2Logger(val client: InfluxDBTinyClient) :
             put("Faults", data.status.faults.joinToString(",") { it.name } .ifBlank { null })
         }
 
-        client.appendMeasurement(measurement, fields)
+        client.appendMeasurement(measurement, fields, sampledAt)
     }
 
     override fun deleteRecordsOlderThan(days: Int) {
@@ -62,5 +63,10 @@ class InfluxDB2Logger(val client: InfluxDBTinyClient) :
 
     companion object {
         private val log = Log<InfluxDB2Logger>()
+        private val InfluxDBException.isTimeout: Boolean get() =
+            failure.httpErrorCode == 500 && failure.error.code == "internal error" && failure.error.message.contains("timeout")
     }
+
+    override fun isRecoverable(e: Throwable): Boolean = super.isRecoverable(e) ||
+        e is InfluxDBException && e.isTimeout
 }

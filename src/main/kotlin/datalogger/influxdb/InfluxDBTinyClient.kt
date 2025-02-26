@@ -3,16 +3,11 @@ package datalogger.influxdb
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import utils.Log
-import utils.rootCause
-import java.net.ConnectException
-import java.net.SocketException
 import java.net.URI
 import java.net.http.HttpClient
-import java.net.http.HttpConnectTimeoutException
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import java.time.Instant
 
 /**
  * @property url the InfluxDB2 URL, e.g. `http://localhost:8086`
@@ -46,34 +41,6 @@ class InfluxDBTinyClient(
         }
     }
 
-    private fun retryAsync(times: Int = 5, backoff: Duration = 15.seconds, block: () -> Unit) {
-        var retries = times
-        while(true) {
-            try {
-                block()
-                return // success
-            } catch (e: Exception) {
-                if (e.shouldRetry && retries > 0) {
-                    log.warn("Failure occurred, retrying in $backoff: $e")
-                    Thread.sleep(backoff.inWholeMilliseconds)
-                    retries--
-                    log.info("Retrying")
-                } else {
-                    throw e
-                }
-            }
-        }
-    }
-
-    private val Exception.shouldRetry: Boolean get() = when {
-        this is ConnectException -> true
-        this is InfluxDBException && failure.httpErrorCode == 500 && failure.error.code == "internal error" && failure.error.message.contains("timeout") -> true
-        this.rootCause.isConnectionReset -> true
-        this is HttpConnectTimeoutException -> true
-        else -> false
-    }
-    private val Throwable.isConnectionReset: Boolean get() = this is SocketException && message == "Connection reset"
-
     /**
      * @param contentType `application/json` or `text/plain; charset=utf-8`
      */
@@ -92,7 +59,11 @@ class InfluxDBTinyClient(
             .execPost(Json.encodeToString(request))
     }
 
-    fun appendMeasurement(measurement: String, data: Map<String, Any?>) {
+    /**
+     * Appends a new measurement named [measurement].
+     * @param sampledAt when the measurement was taken.
+     */
+    fun appendMeasurement(measurement: String, data: Map<String, Any?>, sampledAt: Instant) {
         // the line protocol: https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/
         fun format(value: Any): String = when (value) {
             is UShort, is UInt, is UByte, is ULong, is Short, is Int, is Byte, is Long -> "${value}i"
@@ -105,12 +76,10 @@ class InfluxDBTinyClient(
             .filter { it.value != null }
             .joinToString(",") { "${it.key}=${format(it.value!!)}" }
 
-        val line = "\n$measurement $fields ${System.currentTimeMillis() * 1_000_000}\n"
+        val line = "\n$measurement $fields ${sampledAt.toEpochMilli() * 1_000_000}\n"
 
         val req = buildRequest(writeUri, "text/plain; charset=utf-8")
-        retryAsync {
-            req.execPost(line)
-        }
+        req.execPost(line)
     }
 
     companion object {

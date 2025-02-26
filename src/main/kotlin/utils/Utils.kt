@@ -1,6 +1,7 @@
 package utils
 
 import java.io.PrintStream
+import java.net.SocketException
 import java.time.Instant
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
@@ -73,3 +74,8 @@ val Throwable.rootCause: Throwable get() {
         self = cause
     }
 }
+
+/**
+ * Returns true if this exception is a TCP/IP "Connection reset" exception.
+ */
+val Throwable.isConnectionReset: Boolean get() = this is SocketException && message == "Connection reset"
