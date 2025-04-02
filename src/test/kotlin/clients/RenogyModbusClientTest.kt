@@ -12,7 +12,7 @@ class RenogyModbusClientTest {
     @Test fun readRegister000ANormalResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("010302181e324c")
-        val client = RenogyModbusClient(buffer, 1.seconds)
+        val client = RenogyModbusClient(buffer, 1.seconds, DeviceAddress.DEFAULT)
         val response = client.readRegister(0x0A, 0x02)
         buffer.expectWrittenBytes("0103000a0001a408")
         expect("181e") { response.toHex() }
@@ -21,7 +21,7 @@ class RenogyModbusClientTest {
     @Test fun readRegister000AErrorResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("018302c0f1")
-        val client = RenogyModbusClient(buffer, 1.seconds)
+        val client = RenogyModbusClient(buffer, 1.seconds, DeviceAddress.DEFAULT)
         try {
             client.readRegister(0x0A, 0x02)
             fail("Expected to fail with clients.RenogyException")
@@ -37,7 +37,7 @@ class RenogyModbusClientTest {
     @Test fun readRegister000CNormalResponse() {
         val buffer = Buffer()
         buffer.toReturn.addAll("010310202020204d5434383330202020202020ee98")
-        val client = RenogyModbusClient(buffer, 1.seconds)
+        val client = RenogyModbusClient(buffer, 1.seconds, DeviceAddress.DEFAULT)
         val response = client.readRegister(0x0C, 16)
         buffer.expectWrittenBytes("0103000c0008840f")
         expect("202020204d5434383330202020202020") { response.toHex() }
@@ -54,7 +54,7 @@ class RenogyModbusClientTest {
         // 0608H are the current day's charging amp-hrs (decimal 1544AH);
         // 0810H are the current day's discharging amp-hrs (decimal 2064AH)
         buffer.toReturn.addAll("0103140070008400d80000000a00000608081000700084ebde")
-        val client = RenogyModbusClient(buffer, 1.seconds)
+        val client = RenogyModbusClient(buffer, 1.seconds, DeviceAddress.DEFAULT)
         val dailyStats = client.getDailyStats()
         buffer.expectWrittenBytes("0103010b000ab5f3")
         expect(
