@@ -28,9 +28,11 @@ import kotlin.system.exitProcess
 data class Args(
     @field:Parameters(paramLabel = "DEVICE", description = ["the file name of the serial device to communicate with, e.g. `/dev/ttyUSB0`. Pass in `dummy` for a dummy Renogy client"])
     var device: File? = null,
-    @field:Option(names = ["--status"], description = ["print the Renogy Rover status as JSON to stdout and quit"])
+    @field:Option(names = ["--device-address"], description = ["Identifies the Renogy Rover if there are multiple Renogy devices on the network. Must be 1..247; 0 is a broadcast address to which all slaves respond but do not return commands. Defaults to 1."])
+    var deviceAddress: Byte = 1,
+    @field:Option(names = ["--status"], description = ["print the Renogy Rover status as JSON to stdout and quit. Defaults to false."])
     var printStatusOnly: Boolean = false,
-    @field:Option(names = ["--utc"], description = ["CSV: dump date in UTC instead of local, handy for Grafana"])
+    @field:Option(names = ["--utc"], description = ["CSV: dump date in UTC instead of local, handy for Grafana. Defaults to false."])
     var utc: Boolean = false,
     @field:Option(names = ["--csv"], description = ["appends status to a CSV file, disables stdout status logging"])
     var csv: File? = null,

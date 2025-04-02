@@ -10,11 +10,17 @@ import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.seconds
 
 fun main(_args: Array<String>) {
-    val args = Args.parse(_args)
+    val args: Args = Args.parse(_args)
 
     args.newDataLogger().use { dataLogger ->
         val timeout = 3.seconds // 1.seconds is too small, the app often times out on startup
-        val client: RenogyClient = if (args.isDummy) DummyRenogyClient() else FixDailyStatsClient(RetryOnTimeoutClient(args.device!!, timeout))
+        val client: RenogyClient =
+            if (args.isDummy) DummyRenogyClient() else FixDailyStatsClient(
+                RetryOnTimeoutClient(
+                    args.device!!, timeout,
+                    DeviceAddress(args.deviceAddress)
+                )
+            )
         client.use {
             if (args.printStatusOnly) {
                 val allData: RenogyData = client.getAllData()
@@ -42,7 +48,7 @@ private fun mainLoop(
     val log = Log("Main")
     log.info("Accessing solar controller via $client")
     val systemInfo: SystemInfo = client.getSystemInfo()
-    log.info("Solar Controller: $systemInfo")
+    log.info("Solar Controller (address=${args.deviceAddress}): $systemInfo")
     log.info("Polling the solar controller every ${args.pollInterval} seconds; writing status to ${args.stateFile}, appending data to $dataLogger")
 
     dataLogger.init()

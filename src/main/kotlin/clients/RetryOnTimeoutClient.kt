@@ -14,8 +14,9 @@ import kotlin.time.Duration
  * that the main loop will call us again anyways.
  * @property file The serial device name, e.g. `/dev/ttyUSB0`. [SerialPortIO] is constructed out of it.
  * @property timeout the read+write timeout.
+ * @property deviceAddress identifies the Renogy Rover if there are multiple Renogy devices on the network.
  */
-class RetryOnTimeoutClient(val file: File, val timeout: Duration) : RenogyClient {
+class RetryOnTimeoutClient(val file: File, val timeout: Duration, val deviceAddress: DeviceAddress) : RenogyClient {
     /**
      * Currently used [IO]. Closed on timeout.
      */
@@ -53,10 +54,10 @@ class RetryOnTimeoutClient(val file: File, val timeout: Duration) : RenogyClient
     }
 
     override fun getSystemInfo(): SystemInfo =
-        runAndMitigateExceptions { io -> RenogyModbusClient(io, timeout).getSystemInfo() }
+        runAndMitigateExceptions { io -> RenogyModbusClient(io, timeout, deviceAddress).getSystemInfo() }
 
     override fun getAllData(cachedSystemInfo: SystemInfo?): RenogyData =
-        runAndMitigateExceptions { io -> RenogyModbusClient(io, timeout).getAllData(cachedSystemInfo) }
+        runAndMitigateExceptions { io -> RenogyModbusClient(io, timeout, deviceAddress).getAllData(cachedSystemInfo) }
 
     override fun close() {
         io?.close()

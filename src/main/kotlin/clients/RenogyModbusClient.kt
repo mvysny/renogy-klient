@@ -6,15 +6,26 @@ import utils.*
 import kotlin.time.Duration
 
 /**
+ * The Renogy Rover device address.
+ * Identifies the Renogy Rover if there are multiple Renogy devices on the network.
+ * Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands
+ */
+@JvmInline
+value class DeviceAddress(val address: Byte) {
+    init {
+        require(address in 0..0xf7) { "$address: Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands" }
+    }
+    companion object {
+        val DEFAULT = DeviceAddress(0x01)
+    }
+}
+
+/**
  * Communicates with Renogy Rover over [io]. Doesn't close [io] on [close].
  * @param deviceAddress identifies the Renogy Rover if there are multiple Renogy devices on the network.
  * @param timeout read/write timeout.
  */
-class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: Byte = 0x01) : RenogyClient {
-    init {
-        require(deviceAddress in 0..0xf7) { "$deviceAddress: Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands" }
-    }
-
+class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: DeviceAddress) : RenogyClient {
     /**
      * Performs the ReadRegister call and returns the data returned.
      *
@@ -27,7 +38,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
 
         // prepare request
         val request = ByteArray(8)
-        request[0] = deviceAddress
+        request[0] = deviceAddress.address
         request[1] = COMMAND_READ_REGISTER
         request.setShort(2, startAddress)
         request.setShort(4, noOfReadWords)
@@ -38,7 +49,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: B
 
         // read response
         val responseHeader = io.read(3, timeout)
-        if (responseHeader[0] != deviceAddress) {
+        if (responseHeader[0] != deviceAddress.address) {
             throw RenogyException("${startAddress.toString(16)}: Invalid response: expected deviceAddress $deviceAddress but got ${responseHeader[0]}")
         }
         if (responseHeader[1] == 0x83.toByte()) {
