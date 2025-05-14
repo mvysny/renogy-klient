@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.2")
+    implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.3")
     implementation("info.picocli:picocli:4.7.6")
     implementation("com.fazecast:jSerialComm:2.10.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
