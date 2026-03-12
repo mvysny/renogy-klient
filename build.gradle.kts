@@ -26,10 +26,10 @@ dependencies {
     // PostgreSQL support
     implementation("org.postgresql:postgresql:42.7.3")
     // connection pooling & liveness testing
-    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.zaxxer:HikariCP:7.0.2")
 
     // tests
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.0.1")
     testImplementation(kotlin("test"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.testcontainers:postgresql:1.20.4")
