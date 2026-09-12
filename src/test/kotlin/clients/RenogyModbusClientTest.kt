@@ -74,12 +74,13 @@ class RenogyModbusClientTest {
     }
 
     @Test fun `a response from a different device is rejected`() {
-        buffer.toReturn.addResponse("181e", deviceAddress = 2)
+        buffer.toReturn.addResponse("181e", deviceAddress = 0xf2.toByte())
         try {
             client.readRegister(0x0A, 0x02)
             fail("Expected to fail")
         } catch (e: RenogyException) {
-            expect(true, e.message) { e.message!!.contains("Invalid response") }
+            // both addresses are rendered the same way, so the message is comparable at a glance
+            expect("a: Invalid response: expected deviceAddress 0x01 but got 0xf2") { e.message }
         }
     }
 
@@ -231,6 +232,13 @@ class RenogyModbusClientTest {
 class DeviceAddressTest {
     @Test fun `the default is 1`() {
         expect(1.toUByte()) { DeviceAddress.DEFAULT.address }
+    }
+
+    @Test fun `toString renders the wire byte, zero-padded`() {
+        expect("0x01") { DeviceAddress.DEFAULT.toString() }
+        expect("0x00") { DeviceAddress(0u).toString() }
+        expect("0x0f") { DeviceAddress(0x0fu).toString() }
+        expect("0xf7") { DeviceAddress(0xf7u).toString() }
     }
 
     @Test fun `addresses above the broadcast range are rejected`() {

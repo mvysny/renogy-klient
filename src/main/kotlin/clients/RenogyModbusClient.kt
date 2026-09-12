@@ -15,6 +15,12 @@ value class DeviceAddress(val address: UByte) {
     init {
         require(address <= MAX) { "$address: Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands" }
     }
+
+    /**
+     * Renders as it appears on the wire, e.g. `0x01`.
+     */
+    override fun toString(): String = "0x${address.toByte().toHex()}"
+
     companion object {
         private val MAX: UByte = 0xf7u
         val DEFAULT = DeviceAddress(0x01u)
@@ -51,7 +57,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: D
         // read response
         val responseHeader = io.read(3, timeout)
         if (responseHeader[0].toUByte() != deviceAddress.address) {
-            throw RenogyException("${startAddress.toString(16)}: Invalid response: expected deviceAddress $deviceAddress but got ${responseHeader[0]}")
+            throw RenogyException("${startAddress.toString(16)}: Invalid response: expected deviceAddress $deviceAddress but got 0x${responseHeader[0].toHex()}")
         }
         if (responseHeader[1] == 0x83.toByte()) {
             // error response. First verify checksum.
