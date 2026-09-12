@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.4.10"
-    kotlin("plugin.serialization") version "2.4.10"
+    kotlin("jvm") version "2.4.20"
+    kotlin("plugin.serialization") version "2.4.20"
     application
 }
 
@@ -16,28 +16,28 @@ repositories {
 
 dependencies {
     implementation("com.github.mvysny.kotlin-unsigned-jvm:kotlin-unsigned-jvm:0.3")
-    implementation("info.picocli:picocli:4.7.6")
-    implementation("com.fazecast:jSerialComm:2.10.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("info.picocli:picocli:4.7.7")
+    implementation("com.fazecast:jSerialComm:2.11.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     // logging
-    implementation("org.slf4j:slf4j-simple:2.0.17")
+    implementation("org.slf4j:slf4j-simple:2.0.19")
 
     // PostgreSQL support
-    implementation("org.postgresql:postgresql:42.7.3")
+    implementation("org.postgresql:postgresql:42.7.13")
     // connection pooling & liveness testing
-    implementation("com.zaxxer:HikariCP:7.0.2")
+    implementation("com.zaxxer:HikariCP:7.1.0")
 
     // tests
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.0.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:6.1.3")
     testImplementation(kotlin("test"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.testcontainers:postgresql:1.20.4")
-    testImplementation("com.github.mvysny.vokorm:vok-orm:3.1")
-    testImplementation("org.testcontainers:influxdb:1.20.4")
+    testImplementation("org.testcontainers:postgresql:1.21.4")
+    testImplementation("com.github.mvysny.vokorm:vok-orm:3.2")
+    testImplementation("org.testcontainers:influxdb:1.21.4")
     // InfluxDB 2 support
     // has shitload of dependencies; use for tests only
-    testImplementation("com.influxdb:influxdb-client-kotlin:7.1.0")
+    testImplementation("com.influxdb:influxdb-client-kotlin:8.0.0")
 }
 
 tasks.withType<Test> {
@@ -52,7 +52,7 @@ tasks.withType<Test> {
  * Verifies that the `design/` doc layer is consistent; see AGENTS.md, "Design docs".
  * Bash-only, so it's skipped on Windows.
  */
-val designTripwires by tasks.registering(Exec::class) {
+val designTripwires = tasks.register<Exec>("designTripwires") {
     description = "Checks the design/ doc layer for dangling D_/R_/T_ slugs and oversized AGENTS.md"
     group = "verification"
     commandLine("design/verify_design_tripwires.sh")
