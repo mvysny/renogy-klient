@@ -48,6 +48,21 @@ tasks.withType<Test> {
     }
 }
 
+/**
+ * Verifies that the `design/` doc layer is consistent; see AGENTS.md, "Design docs".
+ * Bash-only, so it's skipped on Windows.
+ */
+val designTripwires by tasks.registering(Exec::class) {
+    description = "Checks the design/ doc layer for dangling D_/R_/T_ slugs and oversized AGENTS.md"
+    group = "verification"
+    commandLine("design/verify_design_tripwires.sh")
+    onlyIf { !System.getProperty("os.name").lowercase().startsWith("windows") }
+}
+
+tasks.named("check") {
+    dependsOn(designTripwires)
+}
+
 application {
     mainClass.set("MainKt")
     applicationDefaultJvmArgs = listOf("-Xmx20m", "-Xss200k", "-client")
