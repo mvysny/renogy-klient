@@ -17,7 +17,8 @@ class ArgsTest {
     @Test fun `the defaults`() {
         val args = args("/dev/ttyUSB0")
         expect(File("/dev/ttyUSB0")) { args.device }
-        expect(1.toByte()) { args.deviceAddress }
+        expect(1) { args.deviceAddress }
+        expect(clients.DeviceAddress.DEFAULT) { args.modbusDeviceAddress }
         expect(false) { args.printStatusOnly }
         expect(false) { args.utc }
         expect(null) { args.csv }
@@ -45,7 +46,7 @@ class ArgsTest {
         expect(true) { args.utc }
         expect(true) { args.printStatusOnly }
         expect(true) { args.verbose }
-        expect(3.toByte()) { args.deviceAddress }
+        expect(3) { args.deviceAddress }
         expect(File("/tmp/foo.csv")) { args.csv }
         expect(File("/tmp/state.json")) { args.stateFile }
         expect(20) { args.pollInterval }
@@ -72,6 +73,27 @@ class ArgsTest {
             fail("Expected to fail")
         } catch (e: IllegalArgumentException) {
             expect("pollInterval: must be 1 or greater but was 0") { e.message }
+        }
+    }
+
+    /**
+     * The whole documented 1..247 range must survive the trip from the command line to the wire;
+     * it used to be a Byte, which silently cut it off at 127.
+     */
+    @Test fun `the full device address range reaches the Modbus client`() {
+        expect(200) { args("dummy", "--device-address", "200").deviceAddress }
+        expect(200.toUByte()) { args("dummy", "--device-address", "200").modbusDeviceAddress.address }
+        expect(247.toUByte()) { args("dummy", "--device-address", "247").modbusDeviceAddress.address }
+    }
+
+    @Test fun `an out-of-range device address is rejected`() {
+        for (bad in listOf(248, 1000)) {
+            try {
+                Args(device = File("dummy"), deviceAddress = bad).validate()
+                fail("Expected $bad to be rejected")
+            } catch (e: IllegalArgumentException) {
+                expect("deviceAddress: must be 0..247 but was $bad") { e.message }
+            }
         }
     }
 

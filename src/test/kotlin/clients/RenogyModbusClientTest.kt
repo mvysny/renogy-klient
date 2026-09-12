@@ -230,13 +230,13 @@ class RenogyModbusClientTest {
 
 class DeviceAddressTest {
     @Test fun `the default is 1`() {
-        expect(1.toByte()) { DeviceAddress.DEFAULT.address }
+        expect(1.toUByte()) { DeviceAddress.DEFAULT.address }
     }
 
-    @Test fun `out-of-range addresses are rejected`() {
-        for (bad in listOf(-1, -128, 0xf8.toByte().toInt())) {
+    @Test fun `addresses above the broadcast range are rejected`() {
+        for (bad in 0xf8..0xff) {
             try {
-                DeviceAddress(bad.toByte())
+                DeviceAddress(bad.toUByte())
                 fail("Expected $bad to be rejected")
             } catch (e: IllegalArgumentException) {
                 // expected
@@ -244,11 +244,22 @@ class DeviceAddressTest {
         }
     }
 
-    // The address is a Byte, so 0x80..0xf7 of the documented 0x01..0xf7 range is unreachable:
-    // those bit patterns arrive as negative Bytes and are rejected.
-    @Test fun `the addressable range is accepted`() {
-        for (good in 0..0x7f) {
-            DeviceAddress(good.toByte())
+    @Test fun `the whole documented range is accepted`() {
+        for (good in 0..0xf7) {
+            expect(good.toUByte()) { DeviceAddress(good.toUByte()).address }
+        }
+    }
+
+    /**
+     * A high address must reach the wire as its raw byte, not as a sign-extended or clamped one.
+     */
+    @Test fun `an address above 127 is framed correctly`() {
+        val buffer = Buffer()
+        buffer.toReturn.addResponse("181e", deviceAddress = 0xf7.toByte())
+        val client = RenogyModbusClient(buffer, 1.seconds, DeviceAddress(0xf7u))
+        expect("181e") { client.readRegister(0x0A, 0x02).toHex() }
+        expect(true, buffer.writtenBytes.toByteArray().toHex()) {
+            buffer.writtenBytes.toByteArray().toHex().startsWith("f703")
         }
     }
 }

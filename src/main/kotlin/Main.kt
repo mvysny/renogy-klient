@@ -18,7 +18,7 @@ fun main(_args: Array<String>) {
             if (args.isDummy) DummyRenogyClient() else FixDailyStatsClient(
                 RetryOnTimeoutClient(
                     args.device!!, timeout,
-                    DeviceAddress(args.deviceAddress)
+                    args.modbusDeviceAddress
                 )
             )
         client.use {

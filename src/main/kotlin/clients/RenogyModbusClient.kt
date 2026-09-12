@@ -11,12 +11,13 @@ import kotlin.time.Duration
  * Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands
  */
 @JvmInline
-value class DeviceAddress(val address: Byte) {
+value class DeviceAddress(val address: UByte) {
     init {
-        require(address in 0..0xf7) { "$address: Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands" }
+        require(address <= MAX) { "$address: Device address must be 0x01..0xf7, 0x00 is a broadcast address to which all slaves respond but do not return commands" }
     }
     companion object {
-        val DEFAULT = DeviceAddress(0x01)
+        private val MAX: UByte = 0xf7u
+        val DEFAULT = DeviceAddress(0x01u)
     }
 }
 
@@ -38,7 +39,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: D
 
         // prepare request
         val request = ByteArray(8)
-        request[0] = deviceAddress.address
+        request[0] = deviceAddress.address.toByte()
         request[1] = COMMAND_READ_REGISTER
         request.setShort(2, startAddress)
         request.setShort(4, noOfReadWords)
@@ -49,7 +50,7 @@ class RenogyModbusClient(val io: IO, val timeout: Duration, val deviceAddress: D
 
         // read response
         val responseHeader = io.read(3, timeout)
-        if (responseHeader[0] != deviceAddress.address) {
+        if (responseHeader[0].toUByte() != deviceAddress.address) {
             throw RenogyException("${startAddress.toString(16)}: Invalid response: expected deviceAddress $deviceAddress but got ${responseHeader[0]}")
         }
         if (responseHeader[1] == 0x83.toByte()) {
