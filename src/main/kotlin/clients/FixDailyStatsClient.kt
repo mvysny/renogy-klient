@@ -9,8 +9,13 @@ import java.time.LocalDate
  * Therefore, we can not trust the daily data at all times. We'll detect the time period when the
  * Renogy daily stats can not be trusted, and we'll calculate them ourselves.
  * @property delegate fetch data from here.
+ * @param currentDate the current date. Only ever overridden by tests: the midnight-crossing branch
+ * is otherwise unreachable without waiting for an actual midnight.
  */
-class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate {
+class FixDailyStatsClient(
+    val delegate: RenogyClient,
+    private val currentDate: () -> LocalDate = LocalDate::now
+) : RenogyClient by delegate {
 
     private var dailyStatsCalculator: DailyStatsStrategy = DailyStatsStrategy.RenogyPassThrough(0u)
     init {
@@ -23,14 +28,14 @@ class FixDailyStatsClient(val delegate: RenogyClient) : RenogyClient by delegate
      */
     private var prevPowerGenerationWh: UShort? = null
 
-    private var lastDataSampledAt: LocalDate = LocalDate.now()
+    private var lastDataSampledAt: LocalDate = currentDate()
 
     override fun getAllData(cachedSystemInfo: SystemInfo?): RenogyData {
         val allData: RenogyData = delegate.getAllData(cachedSystemInfo)
         val currentDailyStatsFromRenogy: DailyStats = allData.dailyStats
 
         // if we crossed the day barrier, force DontTrustRenogyPeriod until Renogy zeroes the daily stats out itself.
-        val today = LocalDate.now()
+        val today = currentDate()
         val crossedMidnight = lastDataSampledAt != today
         if (crossedMidnight) {
             val ldsa = lastDataSampledAt
